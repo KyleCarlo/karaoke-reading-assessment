@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useReadingStore, BASE_INTERVAL_MS } from "./stores";
 import { useDictionaryStore } from "@/features/dictionary/stores";
 
 function cleanWord(raw: string) {
   return raw.replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, "");
+}
+
+/** A run of whitespace that contains a blank line marks a new paragraph. */
+function isParagraphBreak(whitespace: string) {
+  return /\n[ \t]*\n/.test(whitespace);
+}
+
+/** A single newline (not a paragraph break) marks a line break within a paragraph. */
+function isLineBreak(whitespace: string) {
+  return whitespace.includes("\n");
 }
 
 interface ReadingPanelProps {
@@ -89,6 +99,38 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
     if (clean) lookup(clean);
   }
 
+  // Group the flat words array into paragraphs, splitting on blank-line
+  // whitespace runs, so each paragraph can get a first-line indent like
+  // the original document.
+  const paragraphs: ReactNode[][] = [[]];
+  words.forEach((word, i) => {
+    if (word.trim() === "") {
+      if (isParagraphBreak(word)) {
+        paragraphs.push([]);
+      } else if (isLineBreak(word)) {
+        paragraphs[paragraphs.length - 1].push(<br key={i} />);
+      } else {
+        paragraphs[paragraphs.length - 1].push(<span key={i}> </span>);
+      }
+      return;
+    }
+
+    paragraphs[paragraphs.length - 1].push(
+      <span
+        key={i}
+        onClick={() => handleWordClick(word, i)}
+        className={`cursor-pointer rounded-sm px-0.5 transition-colors duration-150 ${
+          highlightIndex === i
+            ? "bg-highlight-active text-accent-foreground"
+            : "hover:bg-highlight/50"
+        } ${rewindMode ? "hover:ring-1 hover:ring-primary" : ""}`}
+      >
+        {word}
+      </span>,
+    );
+  });
+  const nonEmptyParagraphs = paragraphs.filter((p) => p.length > 0);
+
   return (
     <div className="flex flex-col h-full">
       {title && (
@@ -156,25 +198,11 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto pr-2 font-reading text-lg leading-relaxed">
-        {words.map((word, i) => {
-          if (word.trim() === "") {
-            return <span key={i}>{word}</span>;
-          }
-
-          return (
-            <span
-              key={i}
-              onClick={() => handleWordClick(word, i)}
-              className={`cursor-pointer rounded-sm px-0.5 transition-colors duration-150 ${
-                highlightIndex === i
-                  ? "bg-highlight-active text-accent-foreground"
-                  : "hover:bg-highlight/50"
-              } ${rewindMode ? "hover:ring-1 hover:ring-primary" : ""}`}
-            >
-              {word}
-            </span>
-          );
-        })}
+        {nonEmptyParagraphs.map((paragraph, pi) => (
+          <p key={pi} className="indent-8 mb-4 last:mb-0">
+            {paragraph}
+          </p>
+        ))}
       </div>
     </div>
   );
