@@ -25,6 +25,14 @@ interface ReadingStore {
   speed: number;
   /** When true, the next word click rewinds playback instead of opening the dictionary */
   rewindMode: boolean;
+  /** When true, words ahead of the highlight are masked until reached */
+  progressiveReveal: boolean;
+  /**
+   * The furthest word index the reader has reached so far. Only ever
+   * increases — rewinding moves highlightIndex back, but does not hide
+   * text the reader has already legitimately seen.
+   */
+  revealedUpTo: number;
 
   setHighlightIndex: (index: number) => void;
   /** Swap in a new passage (e.g. when the route changes) and reset playback state */
@@ -39,6 +47,7 @@ interface ReadingStore {
   toggleRewindMode: () => void;
   exitRewindMode: () => void;
   rewindTo: (index: number) => void;
+  toggleProgressiveReveal: () => void;
 }
 
 const MIN_SPEED = 0.5;
@@ -49,21 +58,30 @@ const SPEED_STEP = 0.25;
 export const BASE_INTERVAL_MS = 260;
 
 const initialWords = tokenize(SAMPLE_TEXT);
+const initialIndex = firstWordIndex(initialWords);
 
 export const useReadingStore = create<ReadingStore>((set) => ({
   words: initialWords,
-  highlightIndex: firstWordIndex(initialWords),
+  highlightIndex: initialIndex,
   isPlaying: false,
   speed: 1,
   rewindMode: false,
+  progressiveReveal: false,
+  revealedUpTo: initialIndex,
 
-  setHighlightIndex: (index) => set({ highlightIndex: index }),
+  setHighlightIndex: (index) =>
+    set((state) => ({
+      highlightIndex: index,
+      revealedUpTo: Math.max(state.revealedUpTo, index),
+    })),
 
   setText: (text) => {
     const words = tokenize(text);
+    const index = firstWordIndex(words);
     set({
       words,
-      highlightIndex: firstWordIndex(words),
+      highlightIndex: index,
+      revealedUpTo: index,
       isPlaying: false,
       rewindMode: false,
     });
@@ -107,7 +125,10 @@ export const useReadingStore = create<ReadingStore>((set) => ({
         // reached the end of the text
         return { isPlaying: false };
       }
-      return { highlightIndex: next };
+      return {
+        highlightIndex: next,
+        revealedUpTo: Math.max(state.revealedUpTo, next),
+      };
     }),
 
   setSpeed: (speed) =>
@@ -135,5 +156,10 @@ export const useReadingStore = create<ReadingStore>((set) => ({
   exitRewindMode: () => set({ rewindMode: false }),
 
   rewindTo: (index) =>
+    // Note: revealedUpTo is intentionally left untouched here — rewinding
+    // moves the highlight back without re-hiding text already seen.
     set({ highlightIndex: index, isPlaying: false, rewindMode: false }),
+
+  toggleProgressiveReveal: () =>
+    set((state) => ({ progressiveReveal: !state.progressiveReveal })),
 }));

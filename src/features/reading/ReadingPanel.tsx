@@ -28,6 +28,8 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
   const isPlaying = useReadingStore((s) => s.isPlaying);
   const speed = useReadingStore((s) => s.speed);
   const rewindMode = useReadingStore((s) => s.rewindMode);
+  const progressiveReveal = useReadingStore((s) => s.progressiveReveal);
+  const revealedUpTo = useReadingStore((s) => s.revealedUpTo);
 
   const togglePlay = useReadingStore((s) => s.togglePlay);
   const tick = useReadingStore((s) => s.tick);
@@ -37,6 +39,9 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
   const toggleRewindMode = useReadingStore((s) => s.toggleRewindMode);
   const rewindTo = useReadingStore((s) => s.rewindTo);
   const pause = useReadingStore((s) => s.pause);
+  const toggleProgressiveReveal = useReadingStore(
+    (s) => s.toggleProgressiveReveal,
+  );
 
   const lookup = useDictionaryStore((s) => s.lookup);
 
@@ -81,6 +86,7 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
 
   function handleWordClick(word: string, i: number) {
     if (word.trim() === "") return;
+    if (progressiveReveal && i > revealedUpTo) return; // not yet reached
 
     if (rewindMode) {
       rewindTo(i);
@@ -115,15 +121,21 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
       return;
     }
 
+    const isHidden = progressiveReveal && i > revealedUpTo;
+
     paragraphs[paragraphs.length - 1].push(
       <span
         key={i}
         onClick={() => handleWordClick(word, i)}
-        className={`cursor-pointer rounded-sm px-0.5 transition-colors duration-150 ${
-          highlightIndex === i
-            ? "bg-highlight-active text-accent-foreground"
-            : "hover:bg-highlight/50"
-        } ${rewindMode ? "hover:ring-1 hover:ring-primary" : ""}`}
+        className={`rounded-sm px-0.5 transition-colors duration-150 ${
+          isHidden
+            ? "cursor-default select-none blur-sm"
+            : `cursor-pointer ${
+                highlightIndex === i
+                  ? "bg-highlight-active text-accent-foreground"
+                  : "hover:bg-highlight/50"
+              } ${rewindMode ? "hover:ring-1 hover:ring-primary" : ""}`
+        }`}
       >
         {word}
       </span>,
@@ -164,6 +176,18 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
           className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Look up →
+        </button>
+
+        <button
+          onClick={toggleProgressiveReveal}
+          title="Blur upcoming text so it can't be read ahead of the highlight"
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 ${
+            progressiveReveal
+              ? "bg-accent text-accent-foreground"
+              : "bg-secondary text-secondary-foreground"
+          }`}
+        >
+          {progressiveReveal ? "Reveal: On" : "Reveal: Off"}
         </button>
 
         <div className="flex items-center gap-2 ml-auto">
