@@ -4,7 +4,7 @@ import { SAMPLE_TEXT } from "@/lib/utils";
 export default function ReadingPage() {
   return (
     <ReadingSession
-      title="The Ant and the Chrysalis"
+      title="The Last Light in the Library"
       text={SAMPLE_TEXT}
       nextHref="/comprehension-test"
       nextLabel="Take comprehension test"
