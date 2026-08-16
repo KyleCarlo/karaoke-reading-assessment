@@ -4,7 +4,6 @@ houses. Its windows were tall and dusty, and the wooden doors had become darker 
 Although the library was no longer as popular as it had been years before, Mara often noticed a
 single light glowing inside long after sunset.
 
-
 One rainy afternoon, curiosity finally persuaded her to enter.
 
 The librarian, Mr. Elias, was sitting behind the front desk. He looked up from a book and
@@ -95,3 +94,11 @@ and that clicking a word brings up its definition in the panel on the
 right. Try the speed slider and the arrow keys as well. Once
 everything looks and feels right, you are ready to begin the full
 reading session.`;
+
+/**
+ * When true, words ahead of the reader's furthest progress are blurred
+ * and non-interactive until reached — prevents skimming ahead of the
+ * highlight. This is a build-time setting only; there is no in-app
+ * toggle, so change this value and redeploy to switch it on or off.
+ */
+export const PROGRESSIVE_REVEAL_ENABLED = true;
