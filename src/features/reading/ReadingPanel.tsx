@@ -39,9 +39,6 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
   const toggleRewindMode = useReadingStore((s) => s.toggleRewindMode);
   const rewindTo = useReadingStore((s) => s.rewindTo);
   const pause = useReadingStore((s) => s.pause);
-  const toggleProgressiveReveal = useReadingStore(
-    (s) => s.toggleProgressiveReveal,
-  );
 
   const lookup = useDictionaryStore((s) => s.lookup);
 
@@ -176,18 +173,6 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
           className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Look up →
-        </button>
-
-        <button
-          onClick={toggleProgressiveReveal}
-          title="Blur upcoming text so it can't be read ahead of the highlight"
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 ${
-            progressiveReveal
-              ? "bg-accent text-accent-foreground"
-              : "bg-secondary text-secondary-foreground"
-          }`}
-        >
-          {progressiveReveal ? "Reveal: On" : "Reveal: Off"}
         </button>
 
         <div className="flex items-center gap-2 ml-auto">

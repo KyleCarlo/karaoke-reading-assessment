@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { SAMPLE_TEXT } from "@/lib/utils";
+import { SAMPLE_TEXT, PROGRESSIVE_REVEAL_ENABLED } from "@/lib/utils";
 
 function tokenize(text: string): string[] {
   return text.split(/(\s+)/);
@@ -25,7 +25,10 @@ interface ReadingStore {
   speed: number;
   /** When true, the next word click rewinds playback instead of opening the dictionary */
   rewindMode: boolean;
-  /** When true, words ahead of the highlight are masked until reached */
+  /**
+   * When true, words ahead of the highlight are masked until reached.
+   * Set via PROGRESSIVE_REVEAL_ENABLED in lib/utils.ts — no in-app toggle.
+   */
   progressiveReveal: boolean;
   /**
    * The furthest word index the reader has reached so far. Only ever
@@ -47,7 +50,6 @@ interface ReadingStore {
   toggleRewindMode: () => void;
   exitRewindMode: () => void;
   rewindTo: (index: number) => void;
-  toggleProgressiveReveal: () => void;
 }
 
 const MIN_SPEED = 0.5;
@@ -66,7 +68,7 @@ export const useReadingStore = create<ReadingStore>((set) => ({
   isPlaying: false,
   speed: 1,
   rewindMode: false,
-  progressiveReveal: false,
+  progressiveReveal: PROGRESSIVE_REVEAL_ENABLED,
   revealedUpTo: initialIndex,
 
   setHighlightIndex: (index) =>
@@ -159,7 +161,4 @@ export const useReadingStore = create<ReadingStore>((set) => ({
     // Note: revealedUpTo is intentionally left untouched here — rewinding
     // moves the highlight back without re-hiding text already seen.
     set({ highlightIndex: index, isPlaying: false, rewindMode: false }),
-
-  toggleProgressiveReveal: () =>
-    set((state) => ({ progressiveReveal: !state.progressiveReveal })),
 }));
