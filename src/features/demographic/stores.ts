@@ -18,6 +18,7 @@ export interface ReaderProfile {
   difficulties: ReadingDifficulty[];
   otherDifficultyDetail: string;
   concerns: string;
+  consentGiven: boolean;
   submittedAt: string | null;
 }
 
@@ -41,6 +42,7 @@ const emptyProfile: ReaderProfile = {
   difficulties: [],
   otherDifficultyDetail: "",
   concerns: "",
+  consentGiven: false,
   submittedAt: null,
 };
 

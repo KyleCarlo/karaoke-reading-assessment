@@ -29,7 +29,10 @@ export default function DemographicsForm() {
   const [touched, setTouched] = useState(false);
 
   const isValid =
-    profile.name.trim() && profile.level.trim() && profile.section.trim();
+    profile.name.trim() &&
+    profile.level.trim() &&
+    profile.section.trim() &&
+    profile.consentGiven;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -88,7 +91,7 @@ export default function DemographicsForm() {
                 type="text"
                 value={profile.level}
                 onChange={(e) => setField("level", e.target.value)}
-                placeholder="e.g. Grade 11"
+                placeholder="e.g. Grade 4"
                 className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
               {touched && !profile.level.trim() && (
@@ -176,6 +179,29 @@ export default function DemographicsForm() {
               rows={4}
               className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
+          </div>
+
+          {/* Consent */}
+          <div className="pt-2 border-t border-border">
+            <label className="flex items-start gap-2.5 cursor-pointer select-none pt-4">
+              <input
+                type="checkbox"
+                checked={profile.consentGiven}
+                onChange={(e) => setField("consentGiven", e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+              />
+              <span className="text-sm text-foreground">
+                I understand that this reading session will be recorded —
+                including reading time, pauses, word lookups, and comprehension
+                responses — for educational assessment purposes, and I consent
+                to this.
+              </span>
+            </label>
+            {touched && !profile.consentGiven && (
+              <p className="mt-1.5 ml-6 text-xs text-destructive">
+                Consent is required to continue.
+              </p>
+            )}
           </div>
 
           <button
