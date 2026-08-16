@@ -5,82 +5,99 @@ import Link from "next/link";
 
 interface Question {
   id: string;
+  category: string;
   prompt: string;
-  options: string[];
-  correctIndex: number;
 }
 
 const QUESTIONS: Question[] = [
   {
     id: "q1",
-    prompt: "What was the Ant doing when it came across the Chrysalis?",
-    options: [
-      "Sleeping under a tree",
-      "Searching for food",
-      "Building a nest",
-      "Racing another insect",
-    ],
-    correctIndex: 1,
+    category: "Literal comprehension",
+    prompt:
+      "What did Mara discover in the old blue book, and what information did it contain about the town's past?",
   },
   {
     id: "q2",
-    prompt: "How did the Ant treat the Chrysalis at first?",
-    options: [
-      "With kindness and curiosity",
-      "With scorn and mockery",
-      "With fear",
-      "With complete indifference",
-    ],
-    correctIndex: 1,
+    category: "Inferential comprehension",
+    prompt:
+      "Why did Mara begin to suspect that the town's current drainage problems might be connected to events described in the old records?",
   },
   {
     id: "q3",
-    prompt: "What did the Ant find when it passed by again a few days later?",
-    options: [
-      "The Chrysalis had grown legs",
-      "Nothing but the empty shell",
-      "The Chrysalis had disappeared entirely",
-      "Another ant had taken its place",
-    ],
-    correctIndex: 1,
+    category: "Critical/inferential comprehension",
+    prompt:
+      'What does Mr. Elias mean when he says that communities can "lose useful knowledge when people stop preserving their experiences"? Explain using evidence from the story.',
   },
   {
     id: "q4",
-    prompt: 'Who revealed itself as the Ant\u2019s "much-pitied friend"?',
-    options: ["A bird", "A butterfly", "A beetle", "A bee"],
-    correctIndex: 1,
+    category: "Analysis",
+    prompt:
+      "How did the students' understanding of the town change after they compared the historical photographs, maps, and written records with the town's present condition?",
   },
   {
     id: "q5",
-    prompt: "What lesson does this fable teach?",
-    options: [
-      "Slow and steady wins the race",
-      "Don't judge others by their current circumstances",
-      "Honesty is always the best policy",
-      "Actions speak louder than words",
-    ],
-    correctIndex: 1,
+    category: "Higher-order/inferential comprehension",
+    prompt:
+      'What is the significance of the "last light" in the title and at the end of the story? What larger message does it communicate about preserving history and knowledge?',
   },
 ];
 
 export default function ComprehensionTestPage() {
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [touched, setTouched] = useState(false);
 
-  const allAnswered = QUESTIONS.every((q) => answers[q.id] !== undefined);
-  const score = QUESTIONS.filter(
-    (q) => answers[q.id] === q.correctIndex,
-  ).length;
+  const allAnswered = QUESTIONS.every((q) => answers[q.id]?.trim());
 
-  function handleSelect(questionId: string, optionIndex: number) {
-    if (submitted) return;
-    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+  function handleChange(questionId: string, value: string) {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setTouched(true);
     if (!allAnswered) return;
     setSubmitted(true);
+  }
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl bg-card border border-panel-border rounded-lg shadow-sm p-8">
+          <h1 className="font-reading text-2xl font-semibold text-foreground mb-1">
+            Responses recorded
+          </h1>
+          <p className="text-sm text-muted-foreground mb-8">
+            Thank you for completing the comprehension test on &ldquo;The Last
+            Light in the Library.&rdquo; Here is a summary of what was
+            submitted.
+          </p>
+
+          <div className="space-y-6 mb-8">
+            {QUESTIONS.map((q, qi) => (
+              <div key={q.id}>
+                <span className="text-xs font-medium uppercase tracking-wide text-primary">
+                  {q.category}
+                </span>
+                <p className="text-sm font-medium text-foreground mt-0.5 mb-1.5">
+                  {qi + 1}. {q.prompt}
+                </p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-background border border-border rounded-md px-3 py-2">
+                  {answers[q.id]}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href="/"
+            className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Finish
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -91,86 +108,49 @@ export default function ComprehensionTestPage() {
             Comprehension Test
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Answer these questions about &ldquo;The Ant and the Chrysalis&rdquo;
-            to check your understanding.
+            Answer the following questions about &ldquo;The Last Light in the
+            Library&rdquo; in your own words.
           </p>
         </div>
 
-        {submitted && (
-          <div className="mb-6 px-4 py-3 rounded-md bg-secondary text-secondary-foreground text-sm font-medium">
-            You scored {score} out of {QUESTIONS.length}.
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-7">
+        <form onSubmit={handleSubmit} noValidate className="space-y-7">
           {QUESTIONS.map((q, qi) => {
-            const selected = answers[q.id];
+            const value = answers[q.id] ?? "";
+            const isEmpty = touched && !value.trim();
             return (
-              <fieldset key={q.id}>
-                <legend className="text-sm font-medium text-foreground mb-2.5">
+              <div key={q.id}>
+                <span className="block text-xs font-medium uppercase tracking-wide text-primary mb-1">
+                  {q.category}
+                </span>
+                <label
+                  htmlFor={q.id}
+                  className="block text-sm font-medium text-foreground mb-2"
+                >
                   {qi + 1}. {q.prompt}
-                </legend>
-
-                <div className="space-y-2">
-                  {q.options.map((option, oi) => {
-                    const isSelected = selected === oi;
-                    const isCorrect = oi === q.correctIndex;
-
-                    let optionClasses =
-                      "flex items-center gap-2.5 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors";
-
-                    if (submitted) {
-                      optionClasses += " cursor-default";
-                      if (isCorrect) {
-                        optionClasses +=
-                          " border-primary bg-primary/10 text-foreground";
-                      } else if (isSelected && !isCorrect) {
-                        optionClasses +=
-                          " border-destructive bg-destructive/10 text-foreground";
-                      } else {
-                        optionClasses += " border-border text-foreground";
-                      }
-                    } else {
-                      optionClasses += isSelected
-                        ? " border-primary bg-primary/10 text-foreground"
-                        : " border-border text-foreground hover:bg-highlight/30";
-                    }
-
-                    return (
-                      <label key={oi} className={optionClasses}>
-                        <input
-                          type="radio"
-                          name={q.id}
-                          checked={isSelected}
-                          onChange={() => handleSelect(q.id, oi)}
-                          disabled={submitted}
-                          className="h-4 w-4 accent-primary cursor-pointer"
-                        />
-                        <span>{option}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
+                </label>
+                <textarea
+                  id={q.id}
+                  value={value}
+                  onChange={(e) => handleChange(q.id, e.target.value)}
+                  placeholder="Write your answer…"
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+                {isEmpty && (
+                  <p className="mt-1 text-xs text-destructive">
+                    An answer is required.
+                  </p>
+                )}
+              </div>
             );
           })}
 
-          {!submitted ? (
-            <button
-              type="submit"
-              disabled={!allAnswered}
-              className="w-full px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Submit answers
-            </button>
-          ) : (
-            <Link
-              href="/"
-              className="block w-full text-center px-4 py-2.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Finish
-            </Link>
-          )}
+          <button
+            type="submit"
+            className="w-full px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            Submit answers
+          </button>
         </form>
       </div>
     </div>
