@@ -17,8 +17,8 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "Reading Assessment App",
-  description: "Website to assess the reading skills and gaps of students.",
+  title: "Karaoke Reading Assessment",
+  description: "Assess the reading skills of students.",
 };
 
 export default function RootLayout({
