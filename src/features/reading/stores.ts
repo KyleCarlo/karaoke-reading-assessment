@@ -66,10 +66,13 @@ const initialWords = tokenize(SAMPLE_TEXT);
 const initialIndex = firstWordIndex(initialWords);
 
 /**
- * Shared logic for starting playback: on the very first Play click this
- * starts the tracking clock and records the current speed as the initial
- * speed (sessionStartedAt was null); on any later resume from a pause it
- * just closes out the active pause instead.
+ * Shared logic for starting playback:
+ * - Never started before (sessionStartedAt is null) -> begin the session,
+ *   recording the current speed as the initial speed.
+ * - Session had auto-stopped at the end (isActive is false, but it did
+ *   start before) -> this Play click is going back into the text (e.g.
+ *   restarting from the top), so reopen a new active segment.
+ * - Otherwise -> this is an ordinary resume from a manual/lookup pause.
  */
 function beginOrResumePlayback(
   highlightIndex: number,
@@ -79,6 +82,8 @@ function beginOrResumePlayback(
   const tracking = useTrackingStore.getState();
   if (tracking.sessionStartedAt === null) {
     tracking.beginReading(highlightIndex, word, speed);
+  } else if (!tracking.isActive) {
+    tracking.resumeIfEnded();
   } else {
     tracking.recordPauseEnd();
   }
@@ -199,7 +204,17 @@ export const useReadingStore = create<ReadingStore>((set) => ({
     set((state) => {
       const next = nextWordIndex(state.words, state.highlightIndex);
       if (next === null) {
-        // reached the end of the text
+        // Reached the last word and it has now been displayed for its
+        // normal duration — this counts as a pause (reason: "finished")
+        // that stays open until the reader goes back into the text
+        // (rewindTo, or restarting playback from the top) or clicks
+        // Continue.
+        useTrackingStore
+          .getState()
+          .finishReading(
+            state.highlightIndex,
+            state.words[state.highlightIndex] ?? "",
+          );
         return { isPlaying: false };
       }
       useTrackingStore.getState().recordWordEnter(next, state.words[next]);
@@ -251,6 +266,9 @@ export const useReadingStore = create<ReadingStore>((set) => ({
     set((state) => {
       const fromWord = state.words[state.highlightIndex] ?? "";
       const toWord = state.words[index] ?? "";
+
+      // Going back into the text always reopens a stopped session.
+      useTrackingStore.getState().resumeIfEnded();
 
       if (state.isPlaying) {
         useTrackingStore

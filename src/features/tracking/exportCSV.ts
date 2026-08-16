@@ -17,10 +17,10 @@ function row(values: (string | number | null | undefined)[]): string {
 
 /**
  * Builds the full assessment export as a single CSV string, organized into
- * labeled sections (session summary, reader profile, pauses, rereads,
- * dictionary lookups, speed changes, per-word dwell time for heatmap
- * analysis, and comprehension answers). Every event row carries its own
- * timestamp.
+ * labeled sections (session summary, reader profile, reading segments,
+ * pauses, rereads, dictionary lookups, speed changes, per-word dwell time
+ * for heatmap analysis, and comprehension answers). Every event row
+ * carries its own timestamp.
  */
 export function buildAssessmentCsv(): string {
   const profile = useDemographicsStore.getState().profile;
@@ -29,18 +29,31 @@ export function buildAssessmentCsv(): string {
 
   const lines: string[] = [];
 
-  // --- Session summary ---
-  const totalDurationMs =
+  // Active reading duration: sum of each segment's span, excluding any
+  // idle gap between an auto-stop and a later reread/restart.
+  const activeDurationMs = tracking.segments.reduce((sum, seg) => {
+    const endTs =
+      seg.end ?? tracking.sessionEndedAt ?? new Date().toISOString();
+    return (
+      sum +
+      Math.max(0, new Date(endTs).getTime() - new Date(seg.start).getTime())
+    );
+  }, 0);
+
+  // Wall-clock span: first start to last end, including any idle gaps.
+  const wallClockDurationMs =
     tracking.sessionStartedAt && tracking.sessionEndedAt
       ? new Date(tracking.sessionEndedAt).getTime() -
         new Date(tracking.sessionStartedAt).getTime()
       : null;
 
+  // --- Session summary ---
   lines.push("=== SESSION SUMMARY ===");
   lines.push(row(["metric", "value"]));
   lines.push(row(["session_start", tracking.sessionStartedAt]));
   lines.push(row(["session_end", tracking.sessionEndedAt]));
-  lines.push(row(["total_duration_ms", totalDurationMs]));
+  lines.push(row(["active_reading_duration_ms", activeDurationMs]));
+  lines.push(row(["wall_clock_duration_ms", wallClockDurationMs]));
   lines.push(row(["initial_speed", tracking.initialSpeed]));
   lines.push(row(["total_pauses", tracking.pauses.length]));
   lines.push(row(["total_rereads", tracking.rereads.length]));
@@ -57,7 +70,20 @@ export function buildAssessmentCsv(): string {
   lines.push(row(["difficulties", profile.difficulties.join("; ")]));
   lines.push(row(["other_difficulty_detail", profile.otherDifficultyDetail]));
   lines.push(row(["concerns", profile.concerns]));
+  lines.push(row(["consent_given", profile.consentGiven ? "yes" : "no"]));
   lines.push(row(["profile_submitted_at", profile.submittedAt]));
+  lines.push("");
+
+  // --- Reading segments (when the clock was actually running) ---
+  lines.push("=== READING SEGMENTS ===");
+  lines.push(row(["start", "end", "duration_ms"]));
+  for (const seg of tracking.segments) {
+    const endTs = seg.end ?? tracking.sessionEndedAt;
+    const durationMs = endTs
+      ? Math.max(0, new Date(endTs).getTime() - new Date(seg.start).getTime())
+      : null;
+    lines.push(row([seg.start, seg.end, durationMs]));
+  }
   lines.push("");
 
   // --- Pauses ---
