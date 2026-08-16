@@ -60,46 +60,6 @@ export default function ComprehensionTestPage() {
     setSubmitted(true);
   }
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen w-full bg-background flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-2xl bg-card border border-panel-border rounded-lg shadow-sm p-8">
-          <h1 className="font-reading text-2xl font-semibold text-foreground mb-1">
-            Responses recorded
-          </h1>
-          <p className="text-sm text-muted-foreground mb-8">
-            Thank you for completing the comprehension test on &ldquo;The Last
-            Light in the Library.&rdquo; Here is a summary of what was
-            submitted.
-          </p>
-
-          <div className="space-y-6 mb-8">
-            {QUESTIONS.map((q, qi) => (
-              <div key={q.id}>
-                <span className="text-xs font-medium uppercase tracking-wide text-primary">
-                  {q.category}
-                </span>
-                <p className="text-sm font-medium text-foreground mt-0.5 mb-1.5">
-                  {qi + 1}. {q.prompt}
-                </p>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-background border border-border rounded-md px-3 py-2">
-                  {answers[q.id]}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <Link
-            href="/"
-            className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-          >
-            Finish
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-2xl bg-card border border-panel-border rounded-lg shadow-sm p-8">
@@ -134,7 +94,8 @@ export default function ComprehensionTestPage() {
                   onChange={(e) => handleChange(q.id, e.target.value)}
                   placeholder="Write your answer…"
                   rows={4}
-                  className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  disabled={submitted}
+                  className="w-full px-3 py-2 rounded-md bg-background border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none disabled:opacity-60"
                 />
                 {isEmpty && (
                   <p className="mt-1 text-xs text-destructive">
@@ -147,12 +108,46 @@ export default function ComprehensionTestPage() {
 
           <button
             type="submit"
-            className="w-full px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            disabled={submitted}
+            className="w-full px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Submit answers
           </button>
         </form>
       </div>
+
+      {submitted && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+
+          {/* Modal */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="submission-confirmation-title"
+            className="relative w-full max-w-md bg-card border border-panel-border rounded-lg shadow-lg p-8 text-center"
+          >
+            <h2
+              id="submission-confirmation-title"
+              className="font-reading text-xl font-semibold text-foreground mb-2"
+            >
+              Thank you for participating!
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Your responses have been recorded. That completes the reading
+              assessment.
+            </p>
+
+            <Link
+              href="/"
+              className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Finish
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
