@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useTrackingStore } from "@/features/tracking/stores";
 
 export interface DictionaryDefinition {
   definition: string;
@@ -103,6 +104,9 @@ export const useDictionaryStore = create<DictionaryStore>((set) => ({
       .replace(/^[^a-z']+|[^a-z']+$/gi, "");
 
     if (!word) return;
+
+    // Log every lookup attempt, successful or not.
+    useTrackingStore.getState().recordLookup(word);
 
     set({ query: word, loading: true, error: null });
 

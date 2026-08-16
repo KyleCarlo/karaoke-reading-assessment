@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReadingPanel from "./ReadingPanel";
 import DictionaryPanel from "@/features/dictionary/DictionaryPanel";
 import { useReadingStore } from "./stores";
+import { useTrackingStore } from "@/features/tracking/stores";
 
 interface ReadingSessionProps {
   title: string;
@@ -12,6 +13,8 @@ interface ReadingSessionProps {
   /** If provided, shows a "Continue" link once the passage has been read through */
   nextHref?: string;
   nextLabel?: string;
+  /** When true, this session's reading behavior is recorded by the tracking store */
+  trackingEnabled?: boolean;
 }
 
 export default function ReadingSession({
@@ -19,6 +22,7 @@ export default function ReadingSession({
   text,
   nextHref,
   nextLabel = "Continue",
+  trackingEnabled = false,
 }: ReadingSessionProps) {
   const setText = useReadingStore((s) => s.setText);
   const words = useReadingStore((s) => s.words);
@@ -26,9 +30,16 @@ export default function ReadingSession({
 
   useEffect(() => {
     setText(text);
+
+    // Reset tracking data for this passage, but don't start the clock yet —
+    // that happens on the reader's first Play click (see reading store's
+    // togglePlay/play), not on page load.
+    if (trackingEnabled) {
+      useTrackingStore.getState().armSession();
+    }
     // Only re-sync when the passage itself changes, not on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [text, trackingEnabled]);
 
   const lastWordIndex = useMemo(() => {
     for (let i = words.length - 1; i >= 0; i--) {
@@ -38,6 +49,12 @@ export default function ReadingSession({
   }, [words]);
 
   const hasFinished = lastWordIndex >= 0 && revealedUpTo >= lastWordIndex;
+
+  function handleContinueClick() {
+    if (trackingEnabled) {
+      useTrackingStore.getState().endSession();
+    }
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -57,6 +74,7 @@ export default function ReadingSession({
             {hasFinished ? (
               <Link
                 href={nextHref}
+                onClick={handleContinueClick}
                 className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 {nextLabel} →

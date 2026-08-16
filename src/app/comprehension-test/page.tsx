@@ -2,52 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-
-interface Question {
-  id: string;
-  category: string;
-  prompt: string;
-}
-
-const QUESTIONS: Question[] = [
-  {
-    id: "q1",
-    category: "Literal comprehension",
-    prompt:
-      "What did Mara discover in the old blue book, and what information did it contain about the town's past?",
-  },
-  {
-    id: "q2",
-    category: "Inferential comprehension",
-    prompt:
-      "Why did Mara begin to suspect that the town's current drainage problems might be connected to events described in the old records?",
-  },
-  {
-    id: "q3",
-    category: "Critical/inferential comprehension",
-    prompt:
-      'What does Mr. Elias mean when he says that communities can "lose useful knowledge when people stop preserving their experiences"? Explain using evidence from the story.',
-  },
-  {
-    id: "q4",
-    category: "Analysis",
-    prompt:
-      "How did the students' understanding of the town change after they compared the historical photographs, maps, and written records with the town's present condition?",
-  },
-  {
-    id: "q5",
-    category: "Higher-order/inferential comprehension",
-    prompt:
-      'What is the significance of the "last light" in the title and at the end of the story? What larger message does it communicate about preserving history and knowledge?',
-  },
-];
+import { COMPREHENSION_QUESTIONS } from "@/lib/utils";
+import { useComprehensionStore } from "@/features/comprehension-test/stores";
+import { downloadAssessmentCsv } from "@/features/tracking/exportCSV";
 
 export default function ComprehensionTestPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [touched, setTouched] = useState(false);
+  const submitComprehension = useComprehensionStore((s) => s.submit);
 
-  const allAnswered = QUESTIONS.every((q) => answers[q.id]?.trim());
+  const allAnswered = COMPREHENSION_QUESTIONS.every((q) =>
+    answers[q.id]?.trim(),
+  );
 
   function handleChange(questionId: string, value: string) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -57,6 +24,7 @@ export default function ComprehensionTestPage() {
     e.preventDefault();
     setTouched(true);
     if (!allAnswered) return;
+    submitComprehension(answers);
     setSubmitted(true);
   }
 
@@ -74,7 +42,7 @@ export default function ComprehensionTestPage() {
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-7">
-          {QUESTIONS.map((q, qi) => {
+          {COMPREHENSION_QUESTIONS.map((q, qi) => {
             const value = answers[q.id] ?? "";
             const isEmpty = touched && !value.trim();
             return (
@@ -139,12 +107,22 @@ export default function ComprehensionTestPage() {
               assessment.
             </p>
 
-            <Link
-              href="/"
-              className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Finish
-            </Link>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => downloadAssessmentCsv()}
+                className="w-full px-4 py-2.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Download results (CSV)
+              </button>
+
+              <Link
+                href="/"
+                className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                Finish
+              </Link>
+            </div>
           </div>
         </div>
       )}

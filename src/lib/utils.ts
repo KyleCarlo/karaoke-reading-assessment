@@ -95,6 +95,45 @@ right. Try the speed slider and the arrow keys as well. Once
 everything looks and feels right, you are ready to begin the full
 reading session.`;
 
+export interface ComprehensionQuestion {
+  id: string;
+  category: string;
+  prompt: string;
+}
+
+export const COMPREHENSION_QUESTIONS: ComprehensionQuestion[] = [
+  {
+    id: "q1",
+    category: "Literal comprehension",
+    prompt:
+      "What did Mara discover in the old blue book, and what information did it contain about the town's past?",
+  },
+  {
+    id: "q2",
+    category: "Inferential comprehension",
+    prompt:
+      "Why did Mara begin to suspect that the town's current drainage problems might be connected to events described in the old records?",
+  },
+  {
+    id: "q3",
+    category: "Critical/inferential comprehension",
+    prompt:
+      'What does Mr. Elias mean when he says that communities can "lose useful knowledge when people stop preserving their experiences"? Explain using evidence from the story.',
+  },
+  {
+    id: "q4",
+    category: "Analysis",
+    prompt:
+      "How did the students' understanding of the town change after they compared the historical photographs, maps, and written records with the town's present condition?",
+  },
+  {
+    id: "q5",
+    category: "Higher-order/inferential comprehension",
+    prompt:
+      'What is the significance of the "last light" in the title and at the end of the story? What larger message does it communicate about preserving history and knowledge?',
+  },
+];
+
 /**
  * When true, words ahead of the reader's furthest progress are blurred
  * and non-interactive until reached — prevents skimming ahead of the

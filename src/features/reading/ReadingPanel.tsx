@@ -90,13 +90,13 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
       return;
     }
 
-    pause();
+    pause("lookup");
     const clean = cleanWord(word);
     if (clean) lookup(clean);
   }
 
   function handleLookupCurrent() {
-    pause();
+    pause("lookup");
     const current = words[highlightIndex];
     const clean = current ? cleanWord(current) : "";
     if (clean) lookup(clean);

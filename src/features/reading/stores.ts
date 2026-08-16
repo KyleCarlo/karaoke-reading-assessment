@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { SAMPLE_TEXT, PROGRESSIVE_REVEAL_ENABLED } from "@/lib/utils";
+import { useTrackingStore, type PauseReason } from "@/features/tracking/stores";
 
 function tokenize(text: string): string[] {
   return text.split(/(\s+)/);
@@ -41,7 +42,9 @@ interface ReadingStore {
   /** Swap in a new passage (e.g. when the route changes) and reset playback state */
   setText: (text: string) => void;
   play: () => void;
-  pause: () => void;
+  /** Pause playback. Pass a reason when this pause was triggered by
+   * something other than the Play/Pause control (e.g. a dictionary lookup). */
+  pause: (reason?: PauseReason) => void;
   togglePlay: () => void;
   tick: () => void;
   setSpeed: (speed: number) => void;
@@ -62,6 +65,25 @@ export const BASE_INTERVAL_MS = 260;
 const initialWords = tokenize(SAMPLE_TEXT);
 const initialIndex = firstWordIndex(initialWords);
 
+/**
+ * Shared logic for starting playback: on the very first Play click this
+ * starts the tracking clock and records the current speed as the initial
+ * speed (sessionStartedAt was null); on any later resume from a pause it
+ * just closes out the active pause instead.
+ */
+function beginOrResumePlayback(
+  highlightIndex: number,
+  word: string,
+  speed: number,
+) {
+  const tracking = useTrackingStore.getState();
+  if (tracking.sessionStartedAt === null) {
+    tracking.beginReading(highlightIndex, word, speed);
+  } else {
+    tracking.recordPauseEnd();
+  }
+}
+
 export const useReadingStore = create<ReadingStore>((set) => ({
   words: initialWords,
   highlightIndex: initialIndex,
@@ -72,10 +94,15 @@ export const useReadingStore = create<ReadingStore>((set) => ({
   revealedUpTo: initialIndex,
 
   setHighlightIndex: (index) =>
-    set((state) => ({
-      highlightIndex: index,
-      revealedUpTo: Math.max(state.revealedUpTo, index),
-    })),
+    set((state) => {
+      useTrackingStore
+        .getState()
+        .recordWordEnter(index, state.words[index] ?? "");
+      return {
+        highlightIndex: index,
+        revealedUpTo: Math.max(state.revealedUpTo, index),
+      };
+    }),
 
   setText: (text) => {
     const words = tokenize(text);
@@ -94,29 +121,77 @@ export const useReadingStore = create<ReadingStore>((set) => ({
       const hasMore =
         state.words[state.highlightIndex]?.trim() !== "" ||
         nextWordIndex(state.words, state.highlightIndex) !== null;
+
+      beginOrResumePlayback(
+        state.highlightIndex,
+        state.words[state.highlightIndex] ?? "",
+        state.speed,
+      );
+
+      const newIndex = hasMore
+        ? state.highlightIndex
+        : firstWordIndex(state.words);
+      if (!hasMore) {
+        useTrackingStore
+          .getState()
+          .recordWordEnter(newIndex, state.words[newIndex] ?? "");
+      }
       return {
         isPlaying: true,
         rewindMode: false,
-        highlightIndex: hasMore
-          ? state.highlightIndex
-          : firstWordIndex(state.words),
+        highlightIndex: newIndex,
       };
     }),
 
-  pause: () => set({ isPlaying: false }),
+  pause: (reason = "manual") =>
+    set((state) => {
+      if (state.isPlaying) {
+        useTrackingStore
+          .getState()
+          .recordPauseStart(
+            state.highlightIndex,
+            state.words[state.highlightIndex] ?? "",
+            reason,
+          );
+      }
+      return { isPlaying: false };
+    }),
 
   togglePlay: () =>
     set((state) => {
-      if (state.isPlaying) return { isPlaying: false };
+      if (state.isPlaying) {
+        useTrackingStore
+          .getState()
+          .recordPauseStart(
+            state.highlightIndex,
+            state.words[state.highlightIndex] ?? "",
+            "manual",
+          );
+        return { isPlaying: false };
+      }
+
       const hasMore =
         state.words[state.highlightIndex]?.trim() !== "" ||
         nextWordIndex(state.words, state.highlightIndex) !== null;
+
+      beginOrResumePlayback(
+        state.highlightIndex,
+        state.words[state.highlightIndex] ?? "",
+        state.speed,
+      );
+
+      const newIndex = hasMore
+        ? state.highlightIndex
+        : firstWordIndex(state.words);
+      if (!hasMore) {
+        useTrackingStore
+          .getState()
+          .recordWordEnter(newIndex, state.words[newIndex] ?? "");
+      }
       return {
         isPlaying: true,
         rewindMode: false,
-        highlightIndex: hasMore
-          ? state.highlightIndex
-          : firstWordIndex(state.words),
+        highlightIndex: newIndex,
       };
     }),
 
@@ -127,6 +202,7 @@ export const useReadingStore = create<ReadingStore>((set) => ({
         // reached the end of the text
         return { isPlaying: false };
       }
+      useTrackingStore.getState().recordWordEnter(next, state.words[next]);
       return {
         highlightIndex: next,
         revealedUpTo: Math.max(state.revealedUpTo, next),
@@ -134,23 +210,37 @@ export const useReadingStore = create<ReadingStore>((set) => ({
     }),
 
   setSpeed: (speed) =>
-    set({ speed: Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed)) }),
+    set((state) => {
+      const clamped = Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
+      if (clamped !== state.speed) {
+        useTrackingStore.getState().recordSpeedChange(clamped);
+      }
+      return { speed: clamped };
+    }),
 
   increaseSpeed: () =>
-    set((state) => ({
-      speed: Math.min(
+    set((state) => {
+      const newSpeed = Math.min(
         MAX_SPEED,
         Math.round((state.speed + SPEED_STEP) * 100) / 100,
-      ),
-    })),
+      );
+      if (newSpeed !== state.speed) {
+        useTrackingStore.getState().recordSpeedChange(newSpeed);
+      }
+      return { speed: newSpeed };
+    }),
 
   decreaseSpeed: () =>
-    set((state) => ({
-      speed: Math.max(
+    set((state) => {
+      const newSpeed = Math.max(
         MIN_SPEED,
         Math.round((state.speed - SPEED_STEP) * 100) / 100,
-      ),
-    })),
+      );
+      if (newSpeed !== state.speed) {
+        useTrackingStore.getState().recordSpeedChange(newSpeed);
+      }
+      return { speed: newSpeed };
+    }),
 
   toggleRewindMode: () =>
     set((state) => ({ rewindMode: !state.rewindMode, isPlaying: false })),
@@ -158,7 +248,23 @@ export const useReadingStore = create<ReadingStore>((set) => ({
   exitRewindMode: () => set({ rewindMode: false }),
 
   rewindTo: (index) =>
-    // Note: revealedUpTo is intentionally left untouched here — rewinding
-    // moves the highlight back without re-hiding text already seen.
-    set({ highlightIndex: index, isPlaying: false, rewindMode: false }),
+    set((state) => {
+      const fromWord = state.words[state.highlightIndex] ?? "";
+      const toWord = state.words[index] ?? "";
+
+      if (state.isPlaying) {
+        useTrackingStore
+          .getState()
+          .recordPauseStart(state.highlightIndex, fromWord, "reread");
+      }
+      useTrackingStore
+        .getState()
+        .recordReread(state.highlightIndex, fromWord, index, toWord);
+      useTrackingStore.getState().recordWordEnter(index, toWord);
+
+      // Note: revealedUpTo is intentionally left untouched here —
+      // rewinding moves the highlight back without re-hiding text
+      // already seen.
+      return { highlightIndex: index, isPlaying: false, rewindMode: false };
+    }),
 }));

@@ -8,6 +8,7 @@ export default function ReadingPage() {
       text={SAMPLE_TEXT}
       nextHref="/comprehension-test"
       nextLabel="Take comprehension test"
+      trackingEnabled
     />
   );
 }
