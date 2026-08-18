@@ -1,7 +1,12 @@
 self.__BUILD_MANIFEST = {
   "__rewrites": {
     "afterFiles": [],
-    "beforeFiles": [],
+    "beforeFiles": [
+      {
+        "source": "/karaoke-reading-assessment//_next/:path+",
+        "destination": "/karaoke-reading-assessment/_next/:path+"
+      }
+    ],
     "fallback": []
   },
   "sortedPages": [
