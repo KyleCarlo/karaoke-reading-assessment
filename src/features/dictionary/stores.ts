@@ -28,7 +28,7 @@ async function loadDataset(): Promise<Dataset> {
   if (cache) return cache;
   if (!loadingPromise) {
     loadingPromise = fetch(
-      `${process.env.NEXT_PUBLIC_PAGES_BASE_PATH}/dictionary/passage-words.json`,
+      `${process.env.NEXT_PUBLIC_REPO_NAME}/dictionary/passage-words.json`,
     )
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load dictionary data");
