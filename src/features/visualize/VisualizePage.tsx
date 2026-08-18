@@ -201,6 +201,25 @@ export default function VisualizePage() {
     return groups.filter((g) => g.length > 0);
   }, [words, dwellByIndex, pausesByIndex, minDwell, maxDwell]);
 
+  // Dictionary words searched, sorted most- to least-frequent, with the
+  // individual lookup timestamps folded in for a hover tooltip.
+  const dictionaryLookups = useMemo(() => {
+    if (!data) return [];
+    const timestampsByWord = new Map<string, string[]>();
+    for (const row of data.lookupsLog) {
+      const arr = timestampsByWord.get(row.word) ?? [];
+      arr.push(row.timestamp);
+      timestampsByWord.set(row.word, arr);
+    }
+    return data.lookupsSummary
+      .map((row) => ({
+        word: row.word,
+        count: parseInt(row.count, 10) || 0,
+        timestamps: timestampsByWord.get(row.word) ?? [],
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [data]);
+
   const profile = data?.readerProfile;
   const summary = data?.sessionSummary;
 
@@ -400,6 +419,37 @@ export default function VisualizePage() {
                   </p>
                 ))}
               </div>
+            </div>
+
+            {/* Dictionary lookups */}
+            <div className="bg-card border border-panel-border rounded-lg p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                Dictionary Lookups
+              </h2>
+              {dictionaryLookups.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No dictionary lookups recorded.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {dictionaryLookups.map((entry) => (
+                    <span
+                      key={entry.word}
+                      title={
+                        entry.timestamps.length > 0
+                          ? entry.timestamps.join("\n")
+                          : undefined
+                      }
+                      className="inline-flex items-center gap-1.5 bg-background border border-border rounded-full px-3 py-1 text-sm cursor-help"
+                    >
+                      <span className="text-foreground">{entry.word}</span>
+                      <span className="text-xs text-muted-foreground bg-secondary rounded-full px-1.5 py-0.5">
+                        {entry.count}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Comprehension answers */}
