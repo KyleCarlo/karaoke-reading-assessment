@@ -121,7 +121,7 @@ export default function ComprehensionTestPage() {
               </button>
 
               <Link
-                href="/"
+                href="/analysis"
                 className="block w-full text-center px-4 py-2.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 Finish
