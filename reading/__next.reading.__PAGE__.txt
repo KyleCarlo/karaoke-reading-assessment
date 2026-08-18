@@ -90,7 +90,7 @@ library.
 This time, she understood why.
 
 The light was not simply keeping the old building open. It was making it possible for
-forgotten knowledge to become useful again.0:{"buildId":"kYkPSUlsBOQztSbh7XiV2","rsc":["$","$1","c",{"children":[["$","$L2",null,{"title":"The Last Light in the Library","text":"$3","nextHref":"/comprehension-test","nextLabel":"Take comprehension test","trackingEnabled":true}],["$L4"],"$L5"]}],"loading":null,"isPartial":false}
+forgotten knowledge to become useful again.0:{"buildId":"M3tKP-AtE9M255rNx44La","rsc":["$","$1","c",{"children":[["$","$L2",null,{"title":"The Last Light in the Library","text":"$3","nextHref":"/comprehension-test","nextLabel":"Take comprehension test","trackingEnabled":true}],["$L4"],"$L5"]}],"loading":null,"isPartial":false}
 4:["$","script","script-0",{"src":"/karaoke-reading-assessment/_next/static/chunks/e100ea4b453192ed.js","async":true}]
 5:["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]
 8:null
