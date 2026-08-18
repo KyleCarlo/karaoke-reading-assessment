@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "export",
   basePath: repoName,
-  assetPrefix: repoName,
+  assetPrefix: `${repoName}/`,
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
