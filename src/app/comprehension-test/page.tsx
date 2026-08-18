@@ -24,8 +24,12 @@ export default function ComprehensionTestPage() {
     e.preventDefault();
     setTouched(true);
     if (!allAnswered) return;
+
     submitComprehension(answers);
     setSubmitted(true);
+
+    // Automatically download the full assessment CSV right after submission.
+    downloadAssessmentCsv();
   }
 
   return (
@@ -103,8 +107,8 @@ export default function ComprehensionTestPage() {
               Thank you for participating!
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Your responses have been recorded. That completes the reading
-              assessment.
+              Your responses have been recorded, and your results have been
+              downloaded as a CSV file. That completes the reading assessment.
             </p>
 
             <div className="space-y-3">
@@ -113,7 +117,7 @@ export default function ComprehensionTestPage() {
                 onClick={() => downloadAssessmentCsv()}
                 className="w-full px-4 py-2.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
               >
-                Download results (CSV)
+                Download CSV again
               </button>
 
               <Link
