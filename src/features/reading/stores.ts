@@ -226,12 +226,21 @@ export const useReadingStore = create<ReadingStore>((set) => ({
     set((state) => {
       // If a speed adjustment froze dwell tracking, this natural advance
       // is exactly the moment to lift it — closes out the "speed_change"
-      // pause with its real duration and resumes accumulation right
-      // before the word changes.
+      // pause with its real duration (click-driven, so accurate to
+      // measure) and resumes accumulation right before the word changes.
       const tracking = useTrackingStore.getState();
       if (tracking.activePauseReason === "speed_change") {
         tracking.recordPauseEnd();
       }
+
+      // The word now completing was displayed for exactly one designed
+      // interval at the current speed — ReadingPanel's timer fully
+      // restarts on every play/pause/speed transition, so this is always
+      // true by construction. Crediting this fixed value (rather than
+      // measuring real elapsed time) avoids attributing setInterval lag
+      // — e.g. a backgrounded/throttled tab firing late — to the reader
+      // as if they'd dwelled longer.
+      const intervalMs = BASE_INTERVAL_MS / state.speed;
 
       const next = nextWordIndex(state.words, state.highlightIndex);
       if (next === null) {
@@ -245,10 +254,13 @@ export const useReadingStore = create<ReadingStore>((set) => ({
           .finishReading(
             state.highlightIndex,
             state.words[state.highlightIndex] ?? "",
+            intervalMs,
           );
         return { isPlaying: false };
       }
-      useTrackingStore.getState().recordWordEnter(next, state.words[next]);
+      useTrackingStore
+        .getState()
+        .recordWordEnter(next, state.words[next], true, intervalMs);
       return {
         highlightIndex: next,
         revealedUpTo: Math.max(state.revealedUpTo, next),
@@ -327,7 +339,8 @@ export const useReadingStore = create<ReadingStore>((set) => ({
 
       // Rewinding always stops playback, so the word we land on starts in
       // a paused state — its dwell time won't accumulate until the reader
-      // presses Play again.
+      // presses Play again. This closure is click-driven (not tick-driven),
+      // so no deterministic override is needed here — accurate as-is.
       useTrackingStore.getState().recordWordEnter(index, toWord, false);
 
       // Note: revealedUpTo is intentionally left untouched here —
