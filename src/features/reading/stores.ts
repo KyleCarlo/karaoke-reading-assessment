@@ -278,7 +278,11 @@ export const useReadingStore = create<ReadingStore>((set) => ({
       useTrackingStore
         .getState()
         .recordReread(state.highlightIndex, fromWord, index, toWord);
-      useTrackingStore.getState().recordWordEnter(index, toWord);
+
+      // Rewinding always stops playback, so the word we land on starts in
+      // a paused state — its dwell time won't accumulate until the reader
+      // presses Play again.
+      useTrackingStore.getState().recordWordEnter(index, toWord, false);
 
       // Note: revealedUpTo is intentionally left untouched here —
       // rewinding moves the highlight back without re-hiding text

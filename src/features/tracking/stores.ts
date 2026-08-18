@@ -37,7 +37,11 @@ export interface WordVisit {
   enteredAt: string;
   /** null while this is the currently-open visit */
   exitedAt: string | null;
-  /** null while this is the currently-open visit */
+  /**
+   * ACTIVE dwell time only — accumulates only while playback is actually
+   * running. Time spent paused (manual, lookup, reread, or finished)
+   * while this word is current is excluded. Null while still open.
+   */
   durationMs: number | null;
 }
 
@@ -69,6 +73,12 @@ interface TrackingStore {
   wordVisits: WordVisit[];
   segments: ActiveSegment[];
 
+  // Internal bookkeeping for the currently-open word visit's active dwell
+  // time. Only the last entry in wordVisits can ever be open.
+  currentVisitActiveMs: number;
+  /** When active accumulation for the open visit last resumed; null while paused */
+  currentVisitResumedAt: string | null;
+
   // Internal bookkeeping for an in-progress pause; not exported directly.
   activePauseStartedAt: string | null;
   activePauseWordIndex: number | null;
@@ -94,8 +104,9 @@ interface TrackingStore {
   finishReading: (wordIndex: number, word: string) => void;
   /**
    * Stops the session: closes the current active segment and finalizes
-   * any open pause (including a lingering "finished" one) using the
-   * current time as its end. Called when Continue is clicked.
+   * any open pause (including a lingering "finished" one) and the
+   * currently-open word visit, using the current time. Called when
+   * Continue is clicked.
    */
   endSession: () => void;
   /**
@@ -105,8 +116,16 @@ interface TrackingStore {
    * the text (a reread, or restarting from the top) after an auto-stop.
    */
   resumeIfEnded: () => void;
-  /** Call whenever the highlighted word changes (auto-advance or rewind) */
-  recordWordEnter: (wordIndex: number, word: string) => void;
+  /**
+   * Call whenever the highlighted word changes (auto-advance or rewind).
+   * Pass startActive=false when the new word begins in a paused state
+   * (e.g. right after a rewind, before the reader presses Play again).
+   */
+  recordWordEnter: (
+    wordIndex: number,
+    word: string,
+    startActive?: boolean,
+  ) => void;
   /** Call when playback pauses while it was previously playing */
   recordPauseStart: (
     wordIndex: number,
@@ -130,17 +149,6 @@ interface TrackingStore {
 
 function nowIso(): string {
   return new Date().toISOString();
-}
-
-function closeOpenVisit(wordVisits: WordVisit[], ts: string): WordVisit[] {
-  const last = wordVisits[wordVisits.length - 1];
-  if (!last || last.exitedAt !== null) return wordVisits;
-  const started = new Date(last.enteredAt).getTime();
-  const ended = new Date(ts).getTime();
-  return [
-    ...wordVisits.slice(0, -1),
-    { ...last, exitedAt: ts, durationMs: Math.max(0, ended - started) },
-  ];
 }
 
 function closeOpenSegment(
@@ -185,6 +193,40 @@ function finalizeActivePause(
   ];
 }
 
+/**
+ * Computes the final active-dwell duration for the currently-open word
+ * visit as of `ts`, adding any elapsed time since active accumulation
+ * last resumed (if it's currently running).
+ */
+function finalizeActiveVisitMs(
+  activeMsSoFar: number,
+  resumedAt: string | null,
+  ts: string,
+): number {
+  let total = activeMsSoFar;
+  if (resumedAt !== null) {
+    total += Math.max(
+      0,
+      new Date(ts).getTime() - new Date(resumedAt).getTime(),
+    );
+  }
+  return Math.max(0, total);
+}
+
+/** Closes the currently-open word visit (if any) using the given active duration. */
+function closeOpenVisitWith(
+  wordVisits: WordVisit[],
+  ts: string,
+  activeDurationMs: number,
+): WordVisit[] {
+  const last = wordVisits[wordVisits.length - 1];
+  if (!last || last.exitedAt !== null) return wordVisits;
+  return [
+    ...wordVisits.slice(0, -1),
+    { ...last, exitedAt: ts, durationMs: activeDurationMs },
+  ];
+}
+
 export const useTrackingStore = create<TrackingStore>((set, get) => ({
   isActive: false,
   sessionStartedAt: null,
@@ -196,6 +238,8 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
   speedChanges: [],
   wordVisits: [],
   segments: [],
+  currentVisitActiveMs: 0,
+  currentVisitResumedAt: null,
   activePauseStartedAt: null,
   activePauseWordIndex: null,
   activePauseWord: null,
@@ -213,6 +257,8 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
       speedChanges: [],
       wordVisits: [],
       segments: [],
+      currentVisitActiveMs: 0,
+      currentVisitResumedAt: null,
       activePauseStartedAt: null,
       activePauseWordIndex: null,
       activePauseWord: null,
@@ -229,6 +275,9 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
       wordVisits: [
         { wordIndex, word, enteredAt: ts, exitedAt: null, durationMs: null },
       ],
+      // Reading starts immediately in an actively-playing state.
+      currentVisitActiveMs: 0,
+      currentVisitResumedAt: ts,
     });
   },
 
@@ -236,11 +285,19 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     const state = get();
     if (!state.isActive) return;
     const ts = nowIso();
+    const activeMs = finalizeActiveVisitMs(
+      state.currentVisitActiveMs,
+      state.currentVisitResumedAt,
+      ts,
+    );
+
     set({
       isActive: false,
       sessionEndedAt: ts,
       segments: closeOpenSegment(state.segments, ts),
-      wordVisits: closeOpenVisit(state.wordVisits, ts),
+      wordVisits: closeOpenVisitWith(state.wordVisits, ts, activeMs),
+      currentVisitActiveMs: 0,
+      currentVisitResumedAt: null,
       // Open a "finished" pause — left open on purpose, closed later by
       // resumeIfEnded() or endSession() with its real duration.
       activePauseStartedAt: ts,
@@ -254,13 +311,20 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     const state = get();
     if (state.sessionStartedAt === null) return; // never started, nothing to do
     const ts = nowIso();
+    const activeMs = finalizeActiveVisitMs(
+      state.currentVisitActiveMs,
+      state.currentVisitResumedAt,
+      ts,
+    );
 
     set({
       isActive: false,
       sessionEndedAt: ts,
       pauses: finalizeActivePause(state, ts),
       segments: closeOpenSegment(state.segments, ts),
-      wordVisits: closeOpenVisit(state.wordVisits, ts),
+      wordVisits: closeOpenVisitWith(state.wordVisits, ts, activeMs),
+      currentVisitActiveMs: 0,
+      currentVisitResumedAt: null,
       activePauseStartedAt: null,
       activePauseWordIndex: null,
       activePauseWord: null,
@@ -284,16 +348,25 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     });
   },
 
-  recordWordEnter: (wordIndex, word) => {
+  recordWordEnter: (wordIndex, word, startActive = true) => {
     const state = get();
     if (!state.isActive) return;
     const ts = nowIso();
-    const closed = closeOpenVisit(state.wordVisits, ts);
+
+    const activeMs = finalizeActiveVisitMs(
+      state.currentVisitActiveMs,
+      state.currentVisitResumedAt,
+      ts,
+    );
+    const closed = closeOpenVisitWith(state.wordVisits, ts, activeMs);
+
     set({
       wordVisits: [
         ...closed,
         { wordIndex, word, enteredAt: ts, exitedAt: null, durationMs: null },
       ],
+      currentVisitActiveMs: 0,
+      currentVisitResumedAt: startActive ? ts : null,
     });
   },
 
@@ -301,11 +374,22 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     const state = get();
     if (!state.isActive) return;
     if (state.activePauseStartedAt !== null) return; // already mid-pause
+    const ts = nowIso();
+
+    // Freeze active dwell accumulation for the currently-open word visit.
+    const frozenActiveMs = finalizeActiveVisitMs(
+      state.currentVisitActiveMs,
+      state.currentVisitResumedAt,
+      ts,
+    );
+
     set({
-      activePauseStartedAt: nowIso(),
+      activePauseStartedAt: ts,
       activePauseWordIndex: wordIndex,
       activePauseWord: word,
       activePauseReason: reason,
+      currentVisitActiveMs: frozenActiveMs,
+      currentVisitResumedAt: null,
     });
   },
 
@@ -326,6 +410,8 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
       activePauseWordIndex: null,
       activePauseWord: null,
       activePauseReason: null,
+      // Resume active dwell accumulation for the still-open word visit.
+      currentVisitResumedAt: ts,
     });
   },
 
