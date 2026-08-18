@@ -29,9 +29,19 @@ export function buildAssessmentCsv(): string {
 
   const lines: string[] = [];
 
-  // Active reading duration: sum of each segment's span, excluding any
-  // idle gap between an auto-stop and a later reread/restart.
-  const activeDurationMs = tracking.segments.reduce((sum, seg) => {
+  // Active reading duration: sum of each segment's span, MINUS any
+  // pauses that occurred inside those segments (manual, lookup, reread,
+  // speed_change). Segments only close on finishReading/endSession, so
+  // their raw span alone still includes in-segment pause time — it does
+  // NOT automatically exclude it. "finished" pauses are the exception:
+  // they represent idle time strictly AFTER a segment has already
+  // closed, so they must not be subtracted again here (that time was
+  // never part of any segment's span to begin with).
+  const inSegmentPauseMs = tracking.pauses
+    .filter((p) => p.reason !== "finished")
+    .reduce((sum, p) => sum + p.durationMs, 0);
+
+  const rawSegmentMs = tracking.segments.reduce((sum, seg) => {
     const endTs =
       seg.end ?? tracking.sessionEndedAt ?? new Date().toISOString();
     return (
@@ -39,6 +49,8 @@ export function buildAssessmentCsv(): string {
       Math.max(0, new Date(endTs).getTime() - new Date(seg.start).getTime())
     );
   }, 0);
+
+  const activeDurationMs = Math.max(0, rawSegmentMs - inSegmentPauseMs);
 
   // Wall-clock span: first start to last end, including any idle gaps.
   const wallClockDurationMs =
