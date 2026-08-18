@@ -38,6 +38,7 @@ const PAUSE_COLORS: Record<string, string> = {
   lookup: "#9333ea", // purple
   reread: "#ea580c", // orange
   finished: "#4b5563", // gray
+  speed_change: "#0d9488", // teal
 };
 
 const PAUSE_LABELS: Record<string, string> = {
@@ -45,6 +46,7 @@ const PAUSE_LABELS: Record<string, string> = {
   lookup: "Dictionary lookup",
   reread: "Reread (rewind)",
   finished: "Finished reading",
+  speed_change: "Speed adjustment",
 };
 
 function formatMs(ms: number): string {

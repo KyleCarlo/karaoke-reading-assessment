@@ -89,6 +89,28 @@ function beginOrResumePlayback(
   }
 }
 
+/**
+ * Shared logic for a speed adjustment: while actively playing, freeze
+ * dwell-time tracking for whatever word is currently displayed. The
+ * ReadingPanel auto-advance timer resets on every speed change (it has
+ * to, to apply the new pace), which can otherwise inflate that word's
+ * recorded dwell time — especially while dragging the speed slider,
+ * which fires many rapid changes. This freeze is a no-op if one is
+ * already in progress (e.g. mid-drag), and is only lifted once the
+ * highlight genuinely advances to the next word (see tick()), not
+ * immediately — so none of the timer-resettling time counts as dwell.
+ */
+function freezeDwellForSpeedChange(
+  isPlaying: boolean,
+  highlightIndex: number,
+  word: string,
+) {
+  if (!isPlaying) return;
+  useTrackingStore
+    .getState()
+    .recordPauseStart(highlightIndex, word, "speed_change");
+}
+
 export const useReadingStore = create<ReadingStore>((set) => ({
   words: initialWords,
   highlightIndex: initialIndex,
@@ -202,6 +224,15 @@ export const useReadingStore = create<ReadingStore>((set) => ({
 
   tick: () =>
     set((state) => {
+      // If a speed adjustment froze dwell tracking, this natural advance
+      // is exactly the moment to lift it — closes out the "speed_change"
+      // pause with its real duration and resumes accumulation right
+      // before the word changes.
+      const tracking = useTrackingStore.getState();
+      if (tracking.activePauseReason === "speed_change") {
+        tracking.recordPauseEnd();
+      }
+
       const next = nextWordIndex(state.words, state.highlightIndex);
       if (next === null) {
         // Reached the last word and it has now been displayed for its
@@ -229,6 +260,11 @@ export const useReadingStore = create<ReadingStore>((set) => ({
       const clamped = Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
       if (clamped !== state.speed) {
         useTrackingStore.getState().recordSpeedChange(clamped);
+        freezeDwellForSpeedChange(
+          state.isPlaying,
+          state.highlightIndex,
+          state.words[state.highlightIndex] ?? "",
+        );
       }
       return { speed: clamped };
     }),
@@ -241,6 +277,11 @@ export const useReadingStore = create<ReadingStore>((set) => ({
       );
       if (newSpeed !== state.speed) {
         useTrackingStore.getState().recordSpeedChange(newSpeed);
+        freezeDwellForSpeedChange(
+          state.isPlaying,
+          state.highlightIndex,
+          state.words[state.highlightIndex] ?? "",
+        );
       }
       return { speed: newSpeed };
     }),
@@ -253,6 +294,11 @@ export const useReadingStore = create<ReadingStore>((set) => ({
       );
       if (newSpeed !== state.speed) {
         useTrackingStore.getState().recordSpeedChange(newSpeed);
+        freezeDwellForSpeedChange(
+          state.isPlaying,
+          state.highlightIndex,
+          state.words[state.highlightIndex] ?? "",
+        );
       }
       return { speed: newSpeed };
     }),

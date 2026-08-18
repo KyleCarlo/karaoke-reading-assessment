@@ -1,6 +1,11 @@
 import { create } from "zustand";
 
-export type PauseReason = "manual" | "lookup" | "reread" | "finished";
+export type PauseReason =
+  | "manual"
+  | "lookup"
+  | "reread"
+  | "finished"
+  | "speed_change";
 
 export interface PauseEvent {
   /** When the pause started */
@@ -9,7 +14,8 @@ export interface PauseEvent {
   word: string;
   durationMs: number;
   /** Why the pause happened: deliberate Play/Pause, a dictionary lookup,
-   * a rewind, or reaching the end of the passage */
+   * a rewind, reaching the end of the passage, or an in-progress speed
+   * adjustment */
   reason: PauseReason;
 }
 
@@ -39,8 +45,9 @@ export interface WordVisit {
   exitedAt: string | null;
   /**
    * ACTIVE dwell time only — accumulates only while playback is actually
-   * running. Time spent paused (manual, lookup, reread, or finished)
-   * while this word is current is excluded. Null while still open.
+   * running. Time spent paused (manual, lookup, reread, finished, or
+   * mid-speed-adjustment) while this word is current is excluded. Null
+   * while still open.
    */
   durationMs: number | null;
 }
@@ -126,13 +133,17 @@ interface TrackingStore {
     word: string,
     startActive?: boolean,
   ) => void;
-  /** Call when playback pauses while it was previously playing */
+  /**
+   * Call when playback pauses while it was previously playing, or when a
+   * mid-reading speed adjustment should freeze dwell tracking. Safe to
+   * call repeatedly — a no-op if already mid-pause.
+   */
   recordPauseStart: (
     wordIndex: number,
     word: string,
     reason: PauseReason,
   ) => void;
-  /** Call when playback resumes from a pause */
+  /** Call when playback (or dwell tracking) should resume from a pause */
   recordPauseEnd: () => void;
   /** Call whenever the reader rewinds to an earlier word */
   recordReread: (
