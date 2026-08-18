@@ -1,0 +1,94 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,75157,e=>{"use strict";let t=`Every afternoon, seventeen-year-old Mara walked past the old town library on her way
+home from school. The building stood between a busy market and a narrow street lined with small
+houses. Its windows were tall and dusty, and the wooden doors had become darker with age.
+Although the library was no longer as popular as it had been years before, Mara often noticed a
+single light glowing inside long after sunset.
+
+One rainy afternoon, curiosity finally persuaded her to enter.
+
+The librarian, Mr. Elias, was sitting behind the front desk. He looked up from a book and
+smiled when Mara asked why the library remained open so late.
+
+"Some books are still waiting to be read," he replied.
+
+Mara thought he was joking, but Mr. Elias pointed toward a wooden cabinet at the back of
+the room. Inside were dozens of old books covered with thin layers of dust. Their titles were
+difficult to read because many of the covers had faded.
+
+"What makes those books different?" Mara asked.
+
+"They belonged to people who lived here before the town became crowded," Mr. Elias
+explained. "Some contain commonplace stories. Others contain records of events that people
+have forgotten."
+
+Mara became interested. She selected a small blue book and opened it carefully. The first
+pages contained descriptions of the town more than sixty years earlier. There were photographs
+of streets that no longer existed, drawings of houses that had been demolished, and handwritten
+accounts of floods, celebrations, and important community meetings.
+
+As she continued reading, Mara discovered something unexpected. One entry described
+a severe flood that had occurred decades earlier. According to the account, the floodwater had
+risen unusually quickly because a narrow canal behind the market had become blocked by debris.
+Mara immediately remembered something her science teacher had said that morning. The town's
+drainage system was becoming increasingly difficult to maintain because of construction and
+accrued waste.
+
+She returned to the beginning of the entry and read it again.
+
+The old record did not explain exactly what had happened to the canal after the flood.
+However, it mentioned that several residents had organized a cleanup project and had asked local
+officials to improve the drainage system. Mara wondered whether the problem had truly been
+solved or whether the town had simply forgotten about it.
+
+The following day, she returned to the library and told Mr. Elias what she had discovered.
+He listened quietly.
+
+"Why do you think people stopped talking about the flood?" he asked.
+
+Mara considered the question. "Maybe because people remember events differently as
+time passes," she said. "Or perhaps newer problems seemed more important."
+
+Mr. Elias nodded. "That is possible. But there is another reason. Communities sometimes
+lose useful knowledge when people stop preserving their experiences." He showed Mara another
+section of the cabinet. It contained notebooks, newspapers, maps, and letters donated by former
+residents. Some documents described successful community projects, while others recorded
+mistakes that had caused serious problems. Mara suddenly understood why Mr. Elias had kept
+the library open late. The old books were not valuable simply because they were old. They
+contained information that could help people understand how the town had changed.
+
+A few weeks later, Mara presented her discovery to her classmates. She suggested that
+they investigate the town's current drainage problems and compare them with the records
+preserved in the library. At first, only a few students were interested. However, after they
+scrutinized photographs and maps from the old collection, more students joined the project. They
+discovered that several areas that frequently experienced flooding had once contained natural
+waterways. Over the years, some had been covered by roads, buildings, and other structures.
+
+The students did not claim that the old records provided all the answers. Instead, they realized
+that the documents offered clues that could guide further investigation. Their teacher encouraged
+them to interview older residents, examine current maps, and consult local officials. The project
+gradually became larger than Mara had expected.
+
+Months later, the students organized an exhibition in the library. They displayed
+photographs showing how the town had changed and placed them beside modern photographs
+of the same locations. Visitors were surprised by the differences.
+
+One elderly resident stopped in front of a photograph and remained silent for several
+moments.
+
+"I remember this street," she finally said. "There used to be a stream here."
+
+Mara looked at the photograph again. She realized that the library had preserved more
+than words and pictures. It had preserved connections between the past and the present.
+
+Before leaving that evening, Mara noticed that the familiar light was still glowing inside the
+library.
+
+This time, she understood why.
+
+The light was not simply keeping the old building open. It was making it possible for
+forgotten knowledge to become useful again.`,s=`This is a short system test. Use it to check that the highlighting
+moves smoothly, that the play and pause controls respond right away,
+and that clicking a word brings up its definition in the panel on the
+right. Try the speed slider and the arrow keys as well. Once
+everything looks and feels right, you are ready to begin the full
+reading session.`;e.s(["COMPREHENSION_QUESTIONS",0,[{id:"q1",category:"Literal comprehension",prompt:"What did Mara discover in the old blue book, and what information did it contain about the town's past?"},{id:"q2",category:"Inferential comprehension",prompt:"Why did Mara begin to suspect that the town's current drainage problems might be connected to events described in the old records?"},{id:"q3",category:"Critical/inferential comprehension",prompt:'What does Mr. Elias mean when he says that communities can "lose useful knowledge when people stop preserving their experiences"? Explain using evidence from the story.'},{id:"q4",category:"Analysis",prompt:"How did the students' understanding of the town change after they compared the historical photographs, maps, and written records with the town's present condition?"},{id:"q5",category:"Higher-order/inferential comprehension",prompt:'What is the significance of the "last light" in the title and at the end of the story? What larger message does it communicate about preserving history and knowledge?'}],"PROGRESSIVE_REVEAL_ENABLED",0,!0,"SAMPLE_TEXT",0,t,"SYSTEM_TEST_TEXT",0,s])},89123,e=>{"use strict";var t=e.i(43476),s=e.i(71645),r=e.i(75157);function a(e){if(0===e.length)return[];let[t,...s]=e;return s.map(e=>{let s={};return t.forEach((t,r)=>{s[t]=e[r]??""}),s})}function n(e){if(0===e.length)return{};let[,...t]=e,s={};return t.forEach(e=>{s[e[0]]=e[1]??""}),s}function o(e){let t=Math.max(0,Math.min(1,e)),s=Math.round(251+-47*t),r=Math.round(217+-166*t),a=Math.round(81+-30*t);return`rgb(${s}, ${r}, ${a})`}let i={manual:"#2563eb",lookup:"#9333ea",reread:"#ea580c",finished:"#4b5563"},d={manual:"Manual pause",lookup:"Dictionary lookup",reread:"Reread (rewind)",finished:"Finished reading"};function l(e){return e<1e3?`${Math.round(e)}ms`:`${(e/1e3).toFixed(1)}s`}function h({label:e,value:s}){return(0,t.jsxs)("div",{className:"bg-background border border-border rounded-md px-3 py-2",children:[(0,t.jsx)("div",{className:"text-xs text-muted-foreground",children:e}),(0,t.jsx)("div",{className:"text-sm font-medium text-foreground",children:s})]})}function c(){let[e,c]=(0,s.useState)(null),[m,u]=(0,s.useState)(null),[p,g]=(0,s.useState)(null),f=(0,s.useMemo)(()=>r.SAMPLE_TEXT.split(/(\s+)/),[]),x=(0,s.useMemo)(()=>{let t=new Map;if(!e)return t;for(let s of e.wordDwell){let e=parseInt(s.word_index,10);Number.isNaN(e)||t.set(e,{word:s.word,totalDwellMs:parseFloat(s.total_dwell_ms)||0,visitCount:parseInt(s.visit_count,10)||0})}return t},[e]),{minDwell:b,maxDwell:w}=(0,s.useMemo)(()=>{let e=Array.from(x.values()).filter(e=>e.visitCount>0).map(e=>e.totalDwellMs);return 0===e.length?{minDwell:0,maxDwell:0}:{minDwell:Math.min(...e),maxDwell:Math.max(...e)}},[x]),y=(0,s.useMemo)(()=>{let t=new Map;if(!e)return t;for(let s of e.pauses){let e=parseInt(s.word_index,10);if(Number.isNaN(e))continue;let r=t.get(e)??[];r.push({reason:s.reason,durationMs:s.duration_ms,timestamp:s.timestamp}),t.set(e,r)}return t},[e]),v=(0,s.useMemo)(()=>{let e=[[]];return f.forEach((s,r)=>{if(""===s.trim())return void(/\n[ \t]*\n/.test(s)?e.push([]):s.includes("\n")?e[e.length-1].push((0,t.jsx)("br",{},r)):e[e.length-1].push((0,t.jsx)("span",{children:" "},r)));let a=x.get(r),n=void 0!==a&&a.visitCount>0,h={};n&&(h={backgroundColor:o(w===b?.5:(a.totalDwellMs-b)/(w-b))});let c=y.get(r)??[];e[e.length-1].push((0,t.jsxs)("span",{children:[(0,t.jsx)("span",{style:h,title:n?`"${s}" — ${l(a.totalDwellMs)} total dwell, ${a.visitCount} visit(s)`:`"${s}" — not visited`,className:`rounded-sm px-0.5 ${n?"":"opacity-50"}`,children:s}),c.map((e,s)=>(0,t.jsx)("span",{title:`${d[e.reason]??e.reason} — ${l(parseFloat(e.durationMs)||0)}`,style:{color:i[e.reason]??"#000"},className:"font-bold px-px cursor-help",children:"|"},s))]},r))}),e.filter(e=>e.length>0)},[f,x,y,b,w]),j=e?.readerProfile,N=e?.sessionSummary;return(0,t.jsx)("div",{className:"min-h-screen w-full bg-background px-4 py-10",children:(0,t.jsxs)("div",{className:"max-w-4xl mx-auto space-y-6",children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("h1",{className:"font-reading text-2xl font-semibold text-foreground mb-1",children:"Assessment Visualizer"}),(0,t.jsx)("p",{className:"text-sm text-muted-foreground",children:"Upload a reading assessment CSV export to visualize dwell time and pauses over the passage."})]}),(0,t.jsxs)("div",{className:"bg-card border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("label",{className:"block text-sm font-medium text-foreground mb-2",children:"Upload CSV"}),(0,t.jsx)("input",{type:"file",accept:".csv,text/csv",onChange:function(e){let t=e.target.files?.[0];if(!t)return;g(t.name);let s=new FileReader;s.onload=()=>{try{let e=s.result,t=function(e){let t=function(e){let t=[],s=null;for(let r of e)if(0!==r.length&&(1!==r.length||""!==r[0].trim())){if(1===r.length&&/^===.*===$/.test(r[0].trim())){s&&t.push(s),s={title:r[0].trim().replace(/^===\s*|\s*===$/g,""),rows:[]};continue}s&&s.rows.push(r)}return s&&t.push(s),t}(function(e){let t=[],s=[],r="",a=!1,n=0;for(;n<e.length;){let o=e[n];if(a){if('"'===o){if('"'===e[n+1]){r+='"',n+=2;continue}a=!1,n++;continue}r+=o,n++;continue}if('"'===o){a=!0,n++;continue}if(","===o){s.push(r),r="",n++;continue}if("\r"===o){n++;continue}if("\n"===o){s.push(r),t.push(s),s=[],r="",n++;continue}r+=o,n++}return(r.length>0||s.length>0)&&(s.push(r),t.push(s)),t}(e));function s(e){return t.find(t=>t.title===e)?.rows??[]}let r=a(s("COMPREHENSION ANSWERS")),o=r.find(e=>"comprehension_submitted_at"===e.question_id),i=r.filter(e=>"comprehension_submitted_at"!==e.question_id),d={sessionSummary:n(s("SESSION SUMMARY")),readerProfile:n(s("READER PROFILE")),segments:a(s("READING SEGMENTS")),pauses:a(s("PAUSES")),rereads:a(s("REREADS")),speedChanges:a(s("SPEED CHANGES")),lookupsLog:a(s("DICTIONARY LOOKUPS (LOG)")),lookupsSummary:a(s("DICTIONARY LOOKUPS (SUMMARY BY WORD)")),wordDwell:a(s("WORD DWELL TIME (FOR HEATMAP)")),comprehensionAnswers:i,comprehensionSubmittedAt:o?.answer||null};if(0===Object.keys(d.sessionSummary).length&&0===Object.keys(d.readerProfile).length&&0===d.wordDwell.length)throw Error("This doesn't look like a reading assessment CSV export.");return d}(e);c(t),u(null)}catch{u("Couldn't parse this file. Make sure it's a CSV exported from this app's comprehension test page."),c(null)}},s.onerror=()=>{u("Couldn't read this file."),c(null)},s.readAsText(t)},className:"block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:opacity-90 file:cursor-pointer cursor-pointer"}),p&&!m&&(0,t.jsxs)("p",{className:"mt-2 text-xs text-muted-foreground",children:["Loaded: ",p]}),m&&(0,t.jsx)("p",{className:"mt-2 text-xs text-destructive",children:m})]}),e&&(0,t.jsxs)(t.Fragment,{children:[j&&(0,t.jsxs)("div",{className:"bg-card border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("h2",{className:"text-sm font-semibold uppercase tracking-wide text-primary mb-3",children:"Reader Profile"}),(0,t.jsxs)("div",{className:"grid grid-cols-2 gap-3 text-sm",children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Name: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.name||"—"})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Level: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.level||"—"})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Section: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.section||"—"})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Consent: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.consent_given||"—"})]}),(0,t.jsxs)("div",{className:"col-span-2",children:[(0,t.jsxs)("span",{className:"text-muted-foreground",children:["Difficulties:"," "]}),(0,t.jsx)("span",{className:"text-foreground",children:j.difficulties||"None reported"})]}),j.other_difficulty_detail&&(0,t.jsxs)("div",{className:"col-span-2",children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Other: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.other_difficulty_detail})]}),j.concerns&&(0,t.jsxs)("div",{className:"col-span-2",children:[(0,t.jsx)("span",{className:"text-muted-foreground",children:"Concerns: "}),(0,t.jsx)("span",{className:"text-foreground",children:j.concerns})]})]})]}),N&&(0,t.jsxs)("div",{className:"bg-card border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("h2",{className:"text-sm font-semibold uppercase tracking-wide text-primary mb-3",children:"Session Summary"}),(0,t.jsxs)("div",{className:"grid grid-cols-2 sm:grid-cols-4 gap-3",children:[(0,t.jsx)(h,{label:"Active reading",value:N.active_reading_duration_ms?l(Number(N.active_reading_duration_ms)):"—"}),(0,t.jsx)(h,{label:"Wall clock",value:N.wall_clock_duration_ms?l(Number(N.wall_clock_duration_ms)):"—"}),(0,t.jsx)(h,{label:"Initial speed",value:N.initial_speed?`${N.initial_speed}x`:"—"}),(0,t.jsx)(h,{label:"Pauses",value:N.total_pauses||"0"}),(0,t.jsx)(h,{label:"Rereads",value:N.total_rereads||"0"}),(0,t.jsx)(h,{label:"Dictionary lookups",value:N.total_dictionary_lookups||"0"}),(0,t.jsx)(h,{label:"Speed changes",value:N.total_speed_changes||"0"})]})]}),(0,t.jsxs)("div",{className:"bg-card border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("h2",{className:"text-sm font-semibold uppercase tracking-wide text-primary mb-3",children:"Legend"}),(0,t.jsxs)("div",{className:"mb-4",children:[(0,t.jsx)("div",{className:"text-xs text-muted-foreground mb-1.5",children:"Dwell time (word highlight)"}),(0,t.jsx)("div",{className:"h-4 rounded-md w-full max-w-sm",style:{background:`linear-gradient(to right, ${o(0)}, ${o(1)})`}}),(0,t.jsxs)("div",{className:"flex justify-between max-w-sm text-xs text-muted-foreground mt-1",children:[(0,t.jsxs)("span",{children:["Lowest (",l(b),")"]}),(0,t.jsxs)("span",{children:["Highest (",l(w),")"]})]})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{className:"text-xs text-muted-foreground mb-1.5",children:"Pauses (| symbol)"}),(0,t.jsx)("div",{className:"flex flex-wrap gap-x-5 gap-y-1.5",children:Object.entries(d).map(([e,s])=>(0,t.jsxs)("div",{className:"flex items-center gap-1.5",children:[(0,t.jsx)("span",{style:{color:i[e]},className:"font-bold text-base leading-none",children:"|"}),(0,t.jsx)("span",{className:"text-xs text-foreground",children:s})]},e))})]})]}),(0,t.jsxs)("div",{className:"bg-panel border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("h2",{className:"text-sm font-semibold uppercase tracking-wide text-primary mb-3",children:"Passage"}),(0,t.jsx)("div",{className:"font-reading text-lg leading-relaxed",children:v.map((e,s)=>(0,t.jsx)("p",{className:"indent-8 mb-4 last:mb-0",children:e},s))})]}),e.comprehensionAnswers.length>0&&(0,t.jsxs)("div",{className:"bg-card border border-panel-border rounded-lg p-6",children:[(0,t.jsx)("h2",{className:"text-sm font-semibold uppercase tracking-wide text-primary mb-3",children:"Comprehension Answers"}),(0,t.jsx)("div",{className:"space-y-5",children:e.comprehensionAnswers.map((e,s)=>(0,t.jsxs)("div",{children:[(0,t.jsx)("span",{className:"text-xs font-medium uppercase tracking-wide text-primary",children:e.category}),(0,t.jsxs)("p",{className:"text-sm font-medium text-foreground mt-0.5 mb-1.5",children:[s+1,". ",e.prompt]}),(0,t.jsx)("p",{className:"text-sm text-muted-foreground whitespace-pre-wrap bg-background border border-border rounded-md px-3 py-2",children:e.answer||"(no answer)"})]},e.question_id||s))}),e.comprehensionSubmittedAt&&(0,t.jsxs)("p",{className:"text-xs text-muted-foreground mt-4",children:["Submitted at ",e.comprehensionSubmittedAt]})]})]})]})})}e.s(["default",()=>c],89123)}]);
