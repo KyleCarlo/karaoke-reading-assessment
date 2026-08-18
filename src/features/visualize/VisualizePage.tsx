@@ -1,0 +1,436 @@
+"use client";
+
+import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { SAMPLE_TEXT } from "@/lib/utils";
+import { parseAssessmentCsv, type ParsedAssessment } from "./parseCSV";
+
+function tokenize(text: string): string[] {
+  return text.split(/(\s+)/);
+}
+
+function isParagraphBreak(whitespace: string) {
+  return /\n[ \t]*\n/.test(whitespace);
+}
+
+function isLineBreak(whitespace: string) {
+  return whitespace.includes("\n");
+}
+
+const HEATMAP_LOW = { r: 251, g: 217, b: 81 }; // yellow, matches --highlight
+const HEATMAP_HIGH = { r: 204, g: 51, b: 51 }; // red, matches --destructive
+
+function heatmapColor(t: number): string {
+  const clamped = Math.max(0, Math.min(1, t));
+  const r = Math.round(
+    HEATMAP_LOW.r + (HEATMAP_HIGH.r - HEATMAP_LOW.r) * clamped,
+  );
+  const g = Math.round(
+    HEATMAP_LOW.g + (HEATMAP_HIGH.g - HEATMAP_LOW.g) * clamped,
+  );
+  const b = Math.round(
+    HEATMAP_LOW.b + (HEATMAP_HIGH.b - HEATMAP_LOW.b) * clamped,
+  );
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+const PAUSE_COLORS: Record<string, string> = {
+  manual: "#2563eb", // blue
+  lookup: "#9333ea", // purple
+  reread: "#ea580c", // orange
+  finished: "#4b5563", // gray
+};
+
+const PAUSE_LABELS: Record<string, string> = {
+  manual: "Manual pause",
+  lookup: "Dictionary lookup",
+  reread: "Reread (rewind)",
+  finished: "Finished reading",
+};
+
+function formatMs(ms: number): string {
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-background border border-border rounded-md px-3 py-2">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-sm font-medium text-foreground">{value}</div>
+    </div>
+  );
+}
+
+export default function VisualizePage() {
+  const [data, setData] = useState<ParsedAssessment | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const text = reader.result as string;
+        const parsed = parseAssessmentCsv(text);
+        setData(parsed);
+        setError(null);
+      } catch {
+        setError(
+          "Couldn't parse this file. Make sure it's a CSV exported from this app's comprehension test page.",
+        );
+        setData(null);
+      }
+    };
+    reader.onerror = () => {
+      setError("Couldn't read this file.");
+      setData(null);
+    };
+    reader.readAsText(file);
+  }
+
+  const words = useMemo(() => tokenize(SAMPLE_TEXT), []);
+
+  const dwellByIndex = useMemo(() => {
+    const map = new Map<
+      number,
+      { word: string; totalDwellMs: number; visitCount: number }
+    >();
+    if (!data) return map;
+    for (const row of data.wordDwell) {
+      const idx = parseInt(row.word_index, 10);
+      if (Number.isNaN(idx)) continue;
+      map.set(idx, {
+        word: row.word,
+        totalDwellMs: parseFloat(row.total_dwell_ms) || 0,
+        visitCount: parseInt(row.visit_count, 10) || 0,
+      });
+    }
+    return map;
+  }, [data]);
+
+  const { minDwell, maxDwell } = useMemo(() => {
+    const values = Array.from(dwellByIndex.values())
+      .filter((d) => d.visitCount > 0)
+      .map((d) => d.totalDwellMs);
+    if (values.length === 0) return { minDwell: 0, maxDwell: 0 };
+    return { minDwell: Math.min(...values), maxDwell: Math.max(...values) };
+  }, [dwellByIndex]);
+
+  const pausesByIndex = useMemo(() => {
+    const map = new Map<
+      number,
+      { reason: string; durationMs: string; timestamp: string }[]
+    >();
+    if (!data) return map;
+    for (const row of data.pauses) {
+      const idx = parseInt(row.word_index, 10);
+      if (Number.isNaN(idx)) continue;
+      const arr = map.get(idx) ?? [];
+      arr.push({
+        reason: row.reason,
+        durationMs: row.duration_ms,
+        timestamp: row.timestamp,
+      });
+      map.set(idx, arr);
+    }
+    return map;
+  }, [data]);
+
+  // Group the flat words array into paragraphs, same approach as ReadingPanel.
+  const paragraphs = useMemo(() => {
+    const groups: ReactNode[][] = [[]];
+    words.forEach((word, i) => {
+      if (word.trim() === "") {
+        if (isParagraphBreak(word)) {
+          groups.push([]);
+        } else if (isLineBreak(word)) {
+          groups[groups.length - 1].push(<br key={i} />);
+        } else {
+          groups[groups.length - 1].push(<span key={i}> </span>);
+        }
+        return;
+      }
+
+      const dwell = dwellByIndex.get(i);
+      const visited = dwell !== undefined && dwell.visitCount > 0;
+      let style: React.CSSProperties = {};
+      if (visited) {
+        const t =
+          maxDwell === minDwell
+            ? 0.5
+            : (dwell.totalDwellMs - minDwell) / (maxDwell - minDwell);
+        style = { backgroundColor: heatmapColor(t) };
+      }
+
+      const pauses = pausesByIndex.get(i) ?? [];
+
+      groups[groups.length - 1].push(
+        <span key={i}>
+          <span
+            style={style}
+            title={
+              visited
+                ? `"${word}" — ${formatMs(dwell.totalDwellMs)} total dwell, ${dwell.visitCount} visit(s)`
+                : `"${word}" — not visited`
+            }
+            className={`rounded-sm px-0.5 ${visited ? "" : "opacity-50"}`}
+          >
+            {word}
+          </span>
+          {pauses.map((p, pi) => (
+            <span
+              key={pi}
+              title={`${PAUSE_LABELS[p.reason] ?? p.reason} — ${formatMs(
+                parseFloat(p.durationMs) || 0,
+              )}`}
+              style={{ color: PAUSE_COLORS[p.reason] ?? "#000" }}
+              className="font-bold px-px cursor-help"
+            >
+              |
+            </span>
+          ))}
+        </span>,
+      );
+    });
+    return groups.filter((g) => g.length > 0);
+  }, [words, dwellByIndex, pausesByIndex, minDwell, maxDwell]);
+
+  const profile = data?.readerProfile;
+  const summary = data?.sessionSummary;
+
+  return (
+    <div className="min-h-screen w-full bg-background px-4 py-10">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="font-reading text-2xl font-semibold text-foreground mb-1">
+            Assessment Visualizer
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Upload a reading assessment CSV export to visualize dwell time and
+            pauses over the passage.
+          </p>
+        </div>
+
+        {/* Upload control */}
+        <div className="bg-card border border-panel-border rounded-lg p-6">
+          <label className="block text-sm font-medium text-foreground mb-2">
+            Upload CSV
+          </label>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary file:text-primary-foreground hover:file:opacity-90 file:cursor-pointer cursor-pointer"
+          />
+          {fileName && !error && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Loaded: {fileName}
+            </p>
+          )}
+          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+        </div>
+
+        {data && (
+          <>
+            {/* Reader profile */}
+            {profile && (
+              <div className="bg-card border border-panel-border rounded-lg p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                  Reader Profile
+                </h2>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Name: </span>
+                    <span className="text-foreground">
+                      {profile.name || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Level: </span>
+                    <span className="text-foreground">
+                      {profile.level || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Section: </span>
+                    <span className="text-foreground">
+                      {profile.section || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Consent: </span>
+                    <span className="text-foreground">
+                      {profile.consent_given || "—"}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">
+                      Difficulties:{" "}
+                    </span>
+                    <span className="text-foreground">
+                      {profile.difficulties || "None reported"}
+                    </span>
+                  </div>
+                  {profile.other_difficulty_detail && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Other: </span>
+                      <span className="text-foreground">
+                        {profile.other_difficulty_detail}
+                      </span>
+                    </div>
+                  )}
+                  {profile.concerns && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Concerns: </span>
+                      <span className="text-foreground">
+                        {profile.concerns}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Session summary */}
+            {summary && (
+              <div className="bg-card border border-panel-border rounded-lg p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                  Session Summary
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <StatCard
+                    label="Active reading"
+                    value={
+                      summary.active_reading_duration_ms
+                        ? formatMs(Number(summary.active_reading_duration_ms))
+                        : "—"
+                    }
+                  />
+                  <StatCard
+                    label="Wall clock"
+                    value={
+                      summary.wall_clock_duration_ms
+                        ? formatMs(Number(summary.wall_clock_duration_ms))
+                        : "—"
+                    }
+                  />
+                  <StatCard
+                    label="Initial speed"
+                    value={
+                      summary.initial_speed ? `${summary.initial_speed}x` : "—"
+                    }
+                  />
+                  <StatCard
+                    label="Pauses"
+                    value={summary.total_pauses || "0"}
+                  />
+                  <StatCard
+                    label="Rereads"
+                    value={summary.total_rereads || "0"}
+                  />
+                  <StatCard
+                    label="Dictionary lookups"
+                    value={summary.total_dictionary_lookups || "0"}
+                  />
+                  <StatCard
+                    label="Speed changes"
+                    value={summary.total_speed_changes || "0"}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Legend */}
+            <div className="bg-card border border-panel-border rounded-lg p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                Legend
+              </h2>
+
+              <div className="mb-4">
+                <div className="text-xs text-muted-foreground mb-1.5">
+                  Dwell time (word highlight)
+                </div>
+                <div
+                  className="h-4 rounded-md w-full max-w-sm"
+                  style={{
+                    background: `linear-gradient(to right, ${heatmapColor(0)}, ${heatmapColor(1)})`,
+                  }}
+                />
+                <div className="flex justify-between max-w-sm text-xs text-muted-foreground mt-1">
+                  <span>Lowest ({formatMs(minDwell)})</span>
+                  <span>Highest ({formatMs(maxDwell)})</span>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs text-muted-foreground mb-1.5">
+                  Pauses (| symbol)
+                </div>
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                  {Object.entries(PAUSE_LABELS).map(([reason, label]) => (
+                    <div key={reason} className="flex items-center gap-1.5">
+                      <span
+                        style={{ color: PAUSE_COLORS[reason] }}
+                        className="font-bold text-base leading-none"
+                      >
+                        |
+                      </span>
+                      <span className="text-xs text-foreground">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Passage with heatmap + pause markers */}
+            <div className="bg-panel border border-panel-border rounded-lg p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                Passage
+              </h2>
+              <div className="font-reading text-lg leading-relaxed">
+                {paragraphs.map((paragraph, pi) => (
+                  <p key={pi} className="indent-8 mb-4 last:mb-0">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+
+            {/* Comprehension answers */}
+            {data.comprehensionAnswers.length > 0 && (
+              <div className="bg-card border border-panel-border rounded-lg p-6">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                  Comprehension Answers
+                </h2>
+                <div className="space-y-5">
+                  {data.comprehensionAnswers.map((q, qi) => (
+                    <div key={q.question_id || qi}>
+                      <span className="text-xs font-medium uppercase tracking-wide text-primary">
+                        {q.category}
+                      </span>
+                      <p className="text-sm font-medium text-foreground mt-0.5 mb-1.5">
+                        {qi + 1}. {q.prompt}
+                      </p>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-background border border-border rounded-md px-3 py-2">
+                        {q.answer || "(no answer)"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {data.comprehensionSubmittedAt && (
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Submitted at {data.comprehensionSubmittedAt}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
