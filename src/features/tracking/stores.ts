@@ -48,12 +48,10 @@ export interface WordVisit {
    * The final active stretch before a word completes via normal
    * auto-advance is credited deterministically (BASE_INTERVAL_MS / speed
    * at completion time) rather than measured by wall clock, since
-   * setInterval can fire late under browser lag/throttling — measuring
-   * it would attribute that lag to the reader as if they'd dwelled
-   * longer. Any earlier active stretches within the same visit (between
-   * a click-driven pause and its resume) are still real elapsed time,
-   * since those are user-click-driven and not subject to timer lag.
-   * Null while still open.
+   * setInterval can fire late under browser lag/throttling. Any earlier
+   * active stretches within the same visit (between a click-driven pause
+   * and its resume) are real elapsed time, since those are user-driven
+   * and not subject to timer lag. Null while still open.
    */
   durationMs: number | null;
 }
@@ -113,13 +111,15 @@ interface TrackingStore {
    * duration. Closes the active segment and stops the clock, but opens a
    * "finished" pause that stays open (no duration yet) until the reader
    * goes back into the text or the session is explicitly ended.
-   * @param finalSegmentMs deterministic duration (BASE_INTERVAL_MS / speed)
-   *   to credit for the final active stretch, instead of measuring it.
+   * @param targetIntervalMs one full designed interval (BASE_INTERVAL_MS
+   *   / speed) at completion time. The word is credited with at least
+   *   this much, but not less than what it had already genuinely
+   *   accumulated if that's larger (see finalizeActiveVisitMs).
    */
   finishReading: (
     wordIndex: number,
     word: string,
-    finalSegmentMs: number,
+    targetIntervalMs: number,
   ) => void;
   /**
    * Stops the session: closes the current active segment and finalizes
@@ -139,22 +139,29 @@ interface TrackingStore {
    * Call whenever the highlighted word changes (auto-advance or rewind).
    * Pass startActive=false when the new word begins in a paused state
    * (e.g. right after a rewind, before the reader presses Play again).
-   * @param finalSegmentMs when provided (normal auto-advance via tick),
-   *   this deterministic duration (BASE_INTERVAL_MS / speed) is credited
-   *   for the closing word's final active stretch instead of measuring
-   *   it — avoids setInterval-lag inaccuracy. Omit for click-driven
-   *   closures (rewind), which are already lag-free to measure directly.
+   * @param targetIntervalMs when provided (normal auto-advance via tick),
+   *   the closing word is credited with at least one full designed
+   *   interval (BASE_INTERVAL_MS / speed) — never less, and never more
+   *   than what it already genuinely accumulated if that's larger (see
+   *   finalizeActiveVisitMs). Omit for click-driven closures (rewind),
+   *   which are already lag-free to measure directly.
    */
   recordWordEnter: (
     wordIndex: number,
     word: string,
     startActive?: boolean,
-    finalSegmentMs?: number,
+    targetIntervalMs?: number,
   ) => void;
   /**
    * Call when playback pauses while it was previously playing, or when a
-   * mid-reading speed adjustment should freeze dwell tracking. Safe to
-   * call repeatedly — a no-op if already mid-pause.
+   * mid-reading speed adjustment should freeze dwell tracking.
+   *
+   * If a "speed_change" freeze is already in progress and a different
+   * reason comes in (e.g. the reader clicks Pause before the speed
+   * settles), this reclassifies the open pause to the new reason instead
+   * of silently dropping the request — the freeze timestamp is kept as-is
+   * so the eventual duration is still measured correctly. Otherwise, a
+   * no-op if already mid-pause for a non-speed_change reason.
    */
   recordPauseStart: (
     wordIndex: number,
@@ -224,22 +231,38 @@ function finalizeActivePause(
 
 /**
  * Computes the final active-dwell duration for the currently-open word
- * visit as of `ts`. If `overrideActiveSegmentMs` is provided, it's used
- * for the active stretch since the last resume instead of measuring
- * elapsed wall-clock time (used for tick-driven completions, which are
- * subject to setInterval lag).
+ * visit as of `ts`.
+ *
+ * If `targetIntervalMs` is provided (tick-driven completion), the word
+ * is credited with AT LEAST one full designed interval at the
+ * completion-time speed — but never MORE than that just because it was
+ * interrupted by a pause partway through. A word that already
+ * accumulated more than one interval's worth before the pause (e.g. it
+ * was displaying slowly, then sped up) keeps that larger real amount
+ * instead of being shrunk. This is a max(), not a sum() — adding the
+ * target on top of what was already accumulated would double-credit the
+ * pre-pause portion, inflating dwell for any word that gets paused and
+ * resumed mid-display.
+ *
+ * If no target is given (click-driven closures like rewind), elapsed
+ * wall-clock time since the last resume is measured directly — accurate
+ * since those aren't subject to setInterval lag.
  */
 function finalizeActiveVisitMs(
   activeMsSoFar: number,
   resumedAt: string | null,
   ts: string,
-  overrideActiveSegmentMs?: number,
+  targetIntervalMs?: number,
 ): number {
+  if (targetIntervalMs !== undefined) {
+    return Math.max(activeMsSoFar, targetIntervalMs);
+  }
   let total = activeMsSoFar;
   if (resumedAt !== null) {
-    total +=
-      overrideActiveSegmentMs ??
-      Math.max(0, new Date(ts).getTime() - new Date(resumedAt).getTime());
+    total += Math.max(
+      0,
+      new Date(ts).getTime() - new Date(resumedAt).getTime(),
+    );
   }
   return Math.max(0, total);
 }
@@ -312,7 +335,7 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     });
   },
 
-  finishReading: (wordIndex, word, finalSegmentMs) => {
+  finishReading: (wordIndex, word, targetIntervalMs) => {
     const state = get();
     if (!state.isActive) return;
     const ts = nowIso();
@@ -320,7 +343,7 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
       state.currentVisitActiveMs,
       state.currentVisitResumedAt,
       ts,
-      finalSegmentMs,
+      targetIntervalMs,
     );
 
     set({
@@ -380,7 +403,7 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
     });
   },
 
-  recordWordEnter: (wordIndex, word, startActive = true, finalSegmentMs) => {
+  recordWordEnter: (wordIndex, word, startActive = true, targetIntervalMs) => {
     const state = get();
     if (!state.isActive) return;
     const ts = nowIso();
@@ -389,7 +412,7 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
       state.currentVisitActiveMs,
       state.currentVisitResumedAt,
       ts,
-      finalSegmentMs,
+      targetIntervalMs,
     );
     const closed = closeOpenVisitWith(state.wordVisits, ts, activeMs);
 
@@ -406,7 +429,26 @@ export const useTrackingStore = create<TrackingStore>((set, get) => ({
   recordPauseStart: (wordIndex, word, reason) => {
     const state = get();
     if (!state.isActive) return;
-    if (state.activePauseStartedAt !== null) return; // already mid-pause
+
+    if (state.activePauseStartedAt !== null) {
+      // A transient speed-adjustment freeze is already open. If a real
+      // pause request comes in, reclassify it instead of dropping it —
+      // otherwise the reader ends up "paused" in the UI while the
+      // tracking store still thinks it's just settling from a speed
+      // change, and the true reason/word never gets recorded.
+      if (
+        state.activePauseReason === "speed_change" &&
+        reason !== "speed_change"
+      ) {
+        set({
+          activePauseReason: reason,
+          activePauseWordIndex: wordIndex,
+          activePauseWord: word,
+        });
+      }
+      return; // already mid-pause, no new freeze needed either way
+    }
+
     const ts = nowIso();
 
     // Freeze active dwell accumulation for the currently-open word visit.
