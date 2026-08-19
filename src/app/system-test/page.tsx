@@ -54,6 +54,31 @@ export default function SystemTestPage() {
             </p>
 
             <div className="space-y-6 mb-6">
+              {/* Assessment integrity rules — intentionally styled to stand out */}
+              <div className="border border-destructive/40 bg-destructive/5 rounded-md px-4 py-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2">
+                  Before you begin
+                </h3>
+                <ul className="text-sm text-foreground space-y-1.5 list-disc list-inside">
+                  <li>
+                    Find a quiet space and{" "}
+                    <span className="font-medium">avoid any distractions</span>{" "}
+                    for the duration of the test.
+                  </li>
+                  <li>
+                    The use of AI tools (chatbots, search assistants, or
+                    similar) is{" "}
+                    <span className="font-medium">strictly prohibited</span>{" "}
+                    during this assessment.
+                  </li>
+                  <li>
+                    Do <span className="font-medium">not refresh the page</span>{" "}
+                    or <span className="font-medium">switch tabs</span> once the
+                    test has started.
+                  </li>
+                </ul>
+              </div>
+
               <div>
                 <h3 className="text-xs font-medium uppercase tracking-wide text-primary mb-2">
                   How to use it
