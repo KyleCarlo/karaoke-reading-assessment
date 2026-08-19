@@ -52,7 +52,8 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
     return () => clearInterval(interval);
   }, [isPlaying, speed, tick]);
 
-  // Space bar toggles play/pause, right arrow bumps speed up.
+  // Space bar toggles play/pause, right/left arrows adjust speed, and
+  // Shift toggles rewind mode — same as clicking "← Rewind to".
   // Ignored while the user is typing (e.g. in the dictionary search box).
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -76,10 +77,13 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
         e.preventDefault();
         decreaseSpeed();
       }
+      if (e.key === "Shift" && !e.repeat) {
+        toggleRewindMode();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [togglePlay, increaseSpeed, decreaseSpeed]);
+  }, [togglePlay, increaseSpeed, decreaseSpeed, toggleRewindMode]);
 
   function handleWordClick(word: string, i: number) {
     if (word.trim() === "") return;
@@ -158,7 +162,7 @@ export default function ReadingPanel({ title }: ReadingPanelProps) {
 
         <button
           onClick={toggleRewindMode}
-          title="Click a word in the text to rewind to it"
+          title="Click a word in the text to rewind to it (or press Shift)"
           className={`px-4 py-2 rounded-md text-sm font-medium transition-opacity hover:opacity-90 ${
             rewindMode
               ? "bg-accent text-accent-foreground"
