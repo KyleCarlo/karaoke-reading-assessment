@@ -88,12 +88,27 @@ This time, she understood why.
 The light was not simply keeping the old building open. It was making it possible for
 forgotten knowledge to become useful again.`;
 
-export const SYSTEM_TEST_TEXT = `This is a short system test. Use it to check that the highlighting
-moves smoothly, that the play and pause controls respond right away,
-and that clicking a word brings up its definition in the panel on the
-right. Try the speed slider and the arrow keys as well. Once
-everything looks and feels right, you are ready to begin the full
-reading session.`;
+export const SYSTEM_TEST_TEXT = `This is a short system test. Before the real reading passage begins, take a few
+minutes here to get comfortable with the controls you will be using.
+ 
+Press Play and watch the highlighting move steadily from word to word. Notice how
+each word is briefly lit up before the next one takes its place. If the pace feels too
+fast or too slow, use the speed slider, the arrow keys, or the plus and minus buttons
+to adjust it until it feels comfortable to you.
+ 
+Try pausing partway through by pressing Play again or tapping the space bar. You can
+also click directly on any word you have already read to look up its meaning in the
+dictionary panel on the right. If you would like to go back and reread an earlier part
+of this passage, use the rewind control, then click the word you want to return to.
+ 
+You may notice that some of the upcoming text appears blurred until the highlight
+reaches it. This is expected. It simply keeps you from reading ahead of the current
+pace, the same way the real assessment will work.
+ 
+Take your time here. Play with each control more than once, try a few different
+speeds, pause and resume a few times, look up a word or two, and practice rewinding
+to an earlier sentence. Once the play, pause, speed, lookup, and rewind controls all
+feel natural to you, you are ready to begin the real reading assessment.`;
 
 export interface ComprehensionQuestion {
   id: string;
