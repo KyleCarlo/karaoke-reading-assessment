@@ -104,7 +104,11 @@ export default function SystemTestPage() {
                   <li>
                     <span className="font-medium">← Rewind to</span> — click
                     this, then click any word in the text to jump the reading
-                    back to that point.
+                    back to that point. You can also press{" "}
+                    <kbd className="px-1.5 py-0.5 rounded border border-border bg-background text-xs">
+                      Shift
+                    </kbd>{" "}
+                    to do the same thing.
                   </li>
                   <li>
                     <span className="font-medium">Dictionary panel</span> — you
