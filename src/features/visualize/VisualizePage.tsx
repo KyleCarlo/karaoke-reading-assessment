@@ -63,6 +63,50 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Pause bar width: capped square-root scale, not linear ms-to-px.
+ * Linear (1px/ms) made multi-second pauses thousands of pixels wide and
+ * broke the text layout. Sqrt keeps "longer = wider" monotonic while
+ * compressing the extremes into a legible range; the min/max caps
+ * guarantee even a near-zero pause stays visible and even an extreme
+ * outlier stays on the line. Exact duration is always in the tooltip
+ * regardless, so nothing is lost — only the visual scale changes. */
+const PAUSE_BAR_SCALE = 2.2;
+const PAUSE_BAR_MIN_PX = 6;
+const PAUSE_BAR_MAX_PX = 140;
+
+function pauseBarWidthPx(durationMs: number): number {
+  const raw = PAUSE_BAR_SCALE * Math.sqrt(Math.max(0, durationMs));
+  return Math.max(
+    PAUSE_BAR_MIN_PX,
+    Math.min(PAUSE_BAR_MAX_PX, Math.round(raw)),
+  );
+}
+
+/** A pause marker: width scales with duration (capped sqrt scale, see above). */
+function PauseBar({
+  durationMs,
+  reason,
+}: {
+  durationMs: number;
+  reason: string;
+}) {
+  const widthPx = pauseBarWidthPx(durationMs);
+  return (
+    <span
+      title={`${PAUSE_LABELS[reason] ?? reason} — ${formatMs(durationMs)}`}
+      style={{
+        display: "inline-block",
+        width: `${widthPx}px`,
+        height: "0.9em",
+        backgroundColor: PAUSE_COLORS[reason] ?? "#000",
+        verticalAlign: "middle",
+        borderRadius: "1px",
+      }}
+      className="mx-px cursor-help"
+    />
+  );
+}
+
 export default function VisualizePage() {
   const [data, setData] = useState<ParsedAssessment | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,7 +169,7 @@ export default function VisualizePage() {
   const pausesByIndex = useMemo(() => {
     const map = new Map<
       number,
-      { reason: string; durationMs: string; timestamp: string }[]
+      { reason: string; durationMs: number; timestamp: string }[]
     >();
     if (!data) return map;
     for (const row of data.pauses) {
@@ -134,7 +178,7 @@ export default function VisualizePage() {
       const arr = map.get(idx) ?? [];
       arr.push({
         reason: row.reason,
-        durationMs: row.duration_ms,
+        durationMs: parseFloat(row.duration_ms) || 0,
         timestamp: row.timestamp,
       });
       map.set(idx, arr);
@@ -184,16 +228,7 @@ export default function VisualizePage() {
             {word}
           </span>
           {pauses.map((p, pi) => (
-            <span
-              key={pi}
-              title={`${PAUSE_LABELS[p.reason] ?? p.reason} — ${formatMs(
-                parseFloat(p.durationMs) || 0,
-              )}`}
-              style={{ color: PAUSE_COLORS[p.reason] ?? "#000" }}
-              className="font-bold px-px cursor-help"
-            >
-              |
-            </span>
+            <PauseBar key={pi} durationMs={p.durationMs} reason={p.reason} />
           ))}
         </span>,
       );
@@ -389,17 +424,20 @@ export default function VisualizePage() {
 
               <div>
                 <div className="text-xs text-muted-foreground mb-1.5">
-                  Pauses (| symbol)
+                  Pauses (bar width scales with duration)
                 </div>
-                <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                <div className="flex flex-wrap gap-x-5 gap-y-2">
                   {Object.entries(PAUSE_LABELS).map(([reason, label]) => (
                     <div key={reason} className="flex items-center gap-1.5">
                       <span
-                        style={{ color: PAUSE_COLORS[reason] }}
-                        className="font-bold text-base leading-none"
-                      >
-                        |
-                      </span>
+                        style={{
+                          display: "inline-block",
+                          width: "20px",
+                          height: "0.9em",
+                          backgroundColor: PAUSE_COLORS[reason],
+                          borderRadius: "1px",
+                        }}
+                      />
                       <span className="text-xs text-foreground">{label}</span>
                     </div>
                   ))}
@@ -407,8 +445,8 @@ export default function VisualizePage() {
               </div>
             </div>
 
-            {/* Passage with heatmap + pause markers */}
-            <div className="bg-panel border border-panel-border rounded-lg p-6">
+            {/* Passage with heatmap + pause bars */}
+            <div className="bg-panel border border-panel-border rounded-lg p-6 overflow-x-auto">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
                 Passage
               </h2>
