@@ -1,5 +1,5 @@
 1:"$Sreact.fragment"
-2:I[8797,["/karaoke-reading-assessment/_next/static/chunks/ff1a16fafef87110.js","/karaoke-reading-assessment/_next/static/chunks/67bacfcd31bcf0a5.js"],"default"]
+2:I[8797,["/karaoke-reading-assessment/_next/static/chunks/ff1a16fafef87110.js","/karaoke-reading-assessment/_next/static/chunks/c833ad3276780d18.js"],"default"]
 7:I[97367,["/karaoke-reading-assessment/_next/static/chunks/ff1a16fafef87110.js","/karaoke-reading-assessment/_next/static/chunks/d2be314c3ece3fbe.js"],"OutletBoundary"]
 8:"$Sreact.suspense"
 3:T13f4,Every afternoon, seventeen-year-old Mara walked past the old town library on her way
@@ -90,8 +90,8 @@ library.
 This time, she understood why.
 
 The light was not simply keeping the old building open. It was making it possible for
-forgotten knowledge to become useful again.0:{"buildId":"nR9J61IG9mQ0FSrBcLmms","rsc":["$","$1","c",{"children":[["$","$L2",null,{"title":"The Last Light in the Library","text":"$3","nextHref":"/comprehension-test","nextLabel":"Take comprehension test","trackingEnabled":true}],["$L4","$L5"],"$L6"]}],"loading":null,"isPartial":false}
+forgotten knowledge to become useful again.0:{"buildId":"IjToie6WGDBuC7IIWVRiY","rsc":["$","$1","c",{"children":[["$","$L2",null,{"title":"The Last Light in the Library","text":"$3","nextHref":"/comprehension-test","nextLabel":"Take comprehension test","trackingEnabled":true}],["$L4","$L5"],"$L6"]}],"loading":null,"isPartial":false}
 4:["$","script","script-0",{"src":"/karaoke-reading-assessment/_next/static/chunks/ff1a16fafef87110.js","async":true}]
-5:["$","script","script-1",{"src":"/karaoke-reading-assessment/_next/static/chunks/67bacfcd31bcf0a5.js","async":true}]
+5:["$","script","script-1",{"src":"/karaoke-reading-assessment/_next/static/chunks/c833ad3276780d18.js","async":true}]
 6:["$","$L7",null,{"children":["$","$8",null,{"name":"Next.MetadataOutlet","children":"$@9"}]}]
 9:null
